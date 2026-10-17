@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Juvémi Panel</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: logo + kişi çipi → sekmeler → sekme içeriği (genel, görevlerim, giderler, modüller) */
+:root{
+  --bg:#F6F7F8;--surface:#FFFFFF;--ink:#212121;--muted:#66727A;--line:#E2E6E9;
+  --slate:#7090A3;--mustard:#E0A83A;--ok:#3F8F5F;--okbg:#E5F3EA;--wipbg:#FBF1DC;--openbg:#EAF0F4;--bad:#C8463E;--onm:#211a08;
+  --display:"Jost","Futura","Century Gothic",system-ui,sans-serif;--body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181A;--surface:#1E2225;--ink:#ECEEEF;--muted:#9AA6AD;--line:#2E3438;--slate:#8FB0C3;--mustard:#EDB64A;--ok:#6CC08C;--okbg:#1E3326;--wipbg:#3A2F17;--openbg:#22303A;--bad:#E9776F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15181A;--surface:#1E2225;--ink:#ECEEEF;--muted:#9AA6AD;--line:#2E3438;--slate:#8FB0C3;--mustard:#EDB64A;--ok:#6CC08C;--okbg:#1E3326;--wipbg:#3A2F17;--openbg:#22303A;--bad:#E9776F;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:920px;margin:0 auto;padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:24px}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.logo{font-family:var(--display);font-weight:600;font-size:42px;line-height:1;letter-spacing:-.5px}.logo .m{color:var(--slate)}.logo .i{color:var(--mustard)}
+.me{display:flex;align-items:center;gap:10px;font-size:14px}.me img{width:32px;height:32px;border-radius:50%}.me b{display:block}.me span{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:thin}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 14px var(--body);padding:10px 14px;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--ink)}.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--mustard)}
+h2{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+section{display:flex;flex-direction:column}.pane{display:flex;flex-direction:column;gap:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.fact b{display:block;font-size:12px;color:var(--muted);font-weight:600}.fact span{font-weight:700;overflow-wrap:anywhere}.fact.pend span{color:var(--mustard)}
+.ovc{cursor:pointer;text-align:left;font:inherit;color:var(--ink)}.ovc:hover{border-color:var(--slate)}
+.progress{display:flex;align-items:center;gap:12px}.bar{flex:1;height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--slate);transition:width .3s}.pnum{font-variant-numeric:tabular-nums;font-weight:700;min-width:56px;text-align:right}
+.tasks{display:flex;flex-direction:column;gap:10px}
+.task{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:start}
+.task.done{opacity:.65}.task.dragging{opacity:.4}.task.over-top{box-shadow:0 -3px 0 var(--mustard)}.task.over-bot{box-shadow:0 3px 0 var(--mustard)}
+.num{font-family:var(--display);font-weight:700;font-size:22px;color:var(--slate);line-height:1.1;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center}
+.num small{font:700 11px var(--body);color:var(--muted)}
+.ttl{font-weight:700;font-size:16px;min-width:0;overflow-wrap:anywhere}.desc{grid-column:2/4;color:var(--muted);font-size:14px;min-width:0}
+.pill{border:0;border-radius:99px;padding:5px 12px;font:700 12px var(--body);cursor:pointer;white-space:nowrap}
+.pill[data-s=acik]{background:var(--openbg);color:var(--slate)}.pill[data-s=devam]{background:var(--wipbg);color:var(--mustard)}.pill[data-s=bitti]{background:var(--okbg);color:var(--ok)}
+textarea,input,select{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:14px var(--body);padding:8px 10px;min-width:0}
+.note{grid-column:2/4;margin-top:6px;resize:vertical;min-height:38px}
+.del{background:none;border:0;color:var(--muted);font:600 12px var(--body);cursor:pointer;padding:2px 0;justify-self:start}.del.sure{color:var(--bad)}
+.task .del{grid-column:2/4}
+.form{display:grid;gap:8px;grid-template-columns:1fr 1.4fr auto}
+.btn{border:0;border-radius:8px;background:var(--mustard);color:var(--onm);font:700 14px var(--body);padding:9px 16px;cursor:pointer;white-space:nowrap}
+.btn.dark{background:var(--ink);color:var(--bg)}
+.gform{display:grid;gap:8px;grid-template-columns:130px 1fr 170px 120px 150px auto;align-items:end}
+.gform label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+@media (max-width:860px){.gform{grid-template-columns:1fr 1fr}.gform .wide{grid-column:1/3}.gform .btn{grid-column:1/3}}
+@media (max-width:560px){.form{grid-template-columns:1fr}.task{grid-template-columns:auto 1fr}.task .pill{grid-column:2;justify-self:start;grid-row:2}.desc,.note,.task .del{grid-column:1/3}.logo{font-size:34px}}
+.big{font-family:var(--display);font-weight:600;font-size:28px;font-variant-numeric:tabular-nums;line-height:1.2}
+.kv{display:flex;flex-direction:column;gap:8px}.kv .row{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;font-size:14px}
+.kv .row .bar{height:8px}.kv .row .bar i{background:var(--mustard)}.kv .row.cat .bar i{background:var(--slate)}
+.kv .amt{font-variant-numeric:tabular-nums;font-weight:700;text-align:right;min-width:90px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media (max-width:720px){.two{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}
+td.num2,th.num2{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip{display:inline-block;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:700;background:var(--openbg);color:var(--slate);white-space:nowrap}
+.muted{color:var(--muted);font-size:13px}
+.log{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}.log li{display:flex;gap:12px;font-size:14px}.log time{color:var(--muted);min-width:96px;font-variant-numeric:tabular-nums}
+.log b{font-weight:700}
+.risks{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.mod{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.mod .row{display:flex;justify-content:space-between;align-items:center;gap:10px}.tag{border-radius:99px;padding:3px 10px;font:700 11px var(--body);background:var(--line);color:var(--muted);white-space:nowrap}
+.tag.bitti{background:var(--okbg);color:var(--ok)}.tag.devam{background:var(--wipbg);color:var(--mustard)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:16px;color:var(--muted);font-size:14px}
+.status{font-size:12px;color:var(--muted)}
+:focus-visible{outline:2px solid var(--slate);outline-offset:2px}
+
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.gbox{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+.gbox .logo{font-size:56px;text-align:center;margin-bottom:8px}
+.gbox label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+.gbox input{padding:11px 12px;font-size:15px}
+.gerr{color:var(--bad);font-size:13px;min-height:18px;text-align:center}
+.who{font-size:13px;color:var(--muted);text-align:right}.who b{color:var(--ink)}
+.who button{background:none;border:0;color:var(--slate);font:700 13px var(--body);cursor:pointer;padding:0}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head><body>
+<div class="gate" id="gate"><form class="gbox" id="loginform">
+  <div class="logo">Juvé<span class="m">m</span><span class="i">i</span></div>
+  <label>Kullanıcı adı<input id="l-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ör. rumeysa"></label>
+  <label>Şifre<input id="l-pass" type="password" autocomplete="current-password"></label>
+  <button class="btn" id="l-btn" style="padding:12px">Giriş yap</button>
+  <div class="gerr" id="l-err"></div>
+</form></div>
+<div class="wrap" id="app" hidden>
+  <header>
+    <div class="logo">Juvé<span class="m">m</span><span class="i">i</span></div>
+    <div class="who"><div><b id="whoname"></b> · <button type="button" id="logout">Çıkış</button></div><span class="status" id="status"></span></div>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+
+  <div class="pane" data-pane="genel">
+    <section><h2>Netleşenler</h2><div class="grid" id="facts"><div class="empty">Yükleniyor…</div></div></section>
+    <section><h2>Harcamalar</h2><div class="grid" id="gozet"></div></section>
+    <section><h2>Modüller</h2><div class="grid" id="ov"></div></section>
+    <section><h2>Açık riskler</h2><ul class="risks" id="risks"></ul></section>
+    <section><h2>Ekip günlüğü</h2>
+      <form class="form" id="logform" style="grid-template-columns:1fr auto"><input id="logtext" placeholder="Bugün ne oldu? (ör. ikas'a mail atıldı)" autocomplete="off"><button class="btn dark">Ekle</button></form>
+      <ul class="log" id="log"></ul></section>
+  </div>
+
+  <div class="pane" data-pane="gorevler">
+    <section><h2>Görevlerim</h2>
+      <p class="muted" style="margin:0 0 10px">Bu liste sadece sana görünür. Ortakların kendi listelerini görür.</p>
+      <div class="progress"><div class="bar"><i id="barfill" style="width:0"></i></div><div class="pnum" id="pnum">0 / 0</div></div>
+      <form class="form" id="addform" style="margin-top:14px"><input id="add-t" placeholder="Yeni görev başlığı" autocomplete="off" required><input id="add-d" placeholder="Kısa açıklama (isteğe bağlı)" autocomplete="off"><button class="btn">Görev ekle</button></form>
+      <div class="tasks" id="tasks" style="margin-top:12px"></div>
+    </section>
+  </div>
+
+  <div class="pane" data-pane="giderler">
+    <section><h2>Gider ekle</h2>
+      <form class="gform" id="gform">
+        <label>Tarih<input type="date" id="g-tarih" required></label>
+        <label class="wide">Ne için<input id="g-acik" placeholder="ör. juvemi.com alan adı" autocomplete="off" required></label>
+        <label>Kategori<select id="g-kat"></select></label>
+        <label>Tutar (₺)<input id="g-tutar" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0,00" required></label>
+        <label>Kim ödedi<select id="g-odeyen"></select></label>
+        <button class="btn">Kaydet</button>
+      </form>
+    </section>
+    <section><h2>Özet</h2>
+      <div class="two">
+        <div class="card"><div class="muted">Toplam harcama</div><div class="big" id="gtop">₺0</div>
+          <div class="muted" id="gpay" style="margin-top:4px"></div>
+          <h2 style="margin-top:16px">Kim ne ödedi</h2><div class="kv" id="gkisi"></div></div>
+        <div class="card"><h2>Nereye harcandı</h2><div class="kv" id="gkat"></div></div>
+      </div>
+    </section>
+    <section><h2>Tüm giderler</h2><div class="tablewrap"><table><thead><tr><th>Tarih</th><th>Ne için</th><th>Kategori</th><th>Kim ödedi</th><th class="num2">Tutar</th><th></th></tr></thead><tbody id="gtable"></tbody></table></div></section>
+  </div>
+
+  <div class="pane" data-pane="mod" id="modpane"></div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body></html>
