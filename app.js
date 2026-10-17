@@ -22,7 +22,7 @@ const ODEYEN = ["Mustafa", "Rumeysa", "Fatma Nur", "Ortak kasa"], ORTAK = ["Must
 const TL = n => "₺" + Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
 
-let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, panel = { gorevler: [] }, unsub = [];
+let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, panel = { gorevler: [] }, unsub = [];
 let TAB = (location.hash || "").slice(1) || (() => { try { return localStorage.getItem("juvemi-tab"); } catch (e) { } })() || "ana";
 function flash(m) { $("status").textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => $("status").textContent = "", 2500); }
 
@@ -71,6 +71,7 @@ const IC = {
   magaza: '<path d="M3.5 9 5 3.5h14L20.5 9"/><path d="M3.5 9a2.8 2.8 0 0 0 5.6 0 2.8 2.8 0 0 0 5.8 0 2.8 2.8 0 0 0 5.6 0"/><path d="M5 11.5V21h14v-9.5M10 21v-5h4v5"/>',
   sirket: '<path d="M12 3v18M5 7h14M7.5 7 4 14a3.5 3.5 0 0 0 7 0zM16.5 7 13 14a3.5 3.5 0 0 0 7 0z"/><path d="M8 21h8"/>',
   ekip: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.7-4 3.4-6.5 7-6.5s6.3 2.5 7 6.5"/>',
+  ekipapp: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.5 3.2-5.5 6.5-5.5s5.9 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.6c2.6.2 4.4 2 5 5.4"/>',
   menu: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/>',
@@ -84,6 +85,7 @@ const APPS = [
   { id: "gorevler", ad: "Görevlerim", renk: "#3F8F5F", ik: "gorev", alt: () => { const n = (panel.gorevler || []).filter(t => t.durum !== "bitti").length; return n + " açık görev"; } },
   { id: "takvim", ad: "Takvim", renk: "#C98A1B", ik: "takvim", alt: () => { const t = bugun(), n = etk.filter(e => e.tarih >= t).length; return n ? n + " yaklaşan etkinlik" : "Ortak + kişisel"; } },
   { id: "giderler", ad: "Giderler", renk: "#C8463E", ik: "gider", alt: () => TL(giderler.reduce((s, g) => s + (+g.tutar || 0), 0)) },
+  { id: "ekip", ad: "Ekip", renk: "#2F8C8C", ik: "ekipapp", alt: () => ekip.length ? ekip.length + " kurucu ortak" : "Kurucu ortaklar" },
   { id: "butce", ad: "Bütçe & Sermaye", renk: "#7A6CB0", ik: "butce", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
@@ -111,6 +113,7 @@ function renderTabs() {
   if (mod) $("modpane").innerHTML = `<section><p class="muted" style="margin:0 0 12px">${esc(mod.aciklama)}</p><div class="mods">${(mod.bolumler || []).map(b => `<div class="mod"><div class="row"><b>${esc(b.ad)}</b><span class="tag ${esc(b.durum)}">${TAG[b.durum] || esc(b.durum)}</span></div>${b.not ? `<div class="muted">${esc(b.not)}</div>` : ""}</div>`).join("")}</div></section>`;
   if (TAB === "takvim") renderCal();
   if (TAB === "butce") renderButce();
+  if (TAB === "ekip") renderEkip();
 }
 
 /* ---------- takvim ---------- */
@@ -279,6 +282,32 @@ $("smform").onsubmit = e => {
     .then(() => { $("sm-tutar").value = ""; $("sm-acik").value = ""; flash("Sermaye kaydedildi"); }).catch(() => flash("Kaydedilemedi"));
 };
 
+/* ---------- ekip ---------- */
+const ini = s => (s || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toLocaleUpperCase("tr-TR");
+function renderEkip() {
+  const el = $("team"); if (!ekip.length) { el.innerHTML = '<div class="empty">Henüz ekip bilgisi yok.</div>'; return; }
+  if (el.contains(document.activeElement) && document.activeElement.tagName === "TEXTAREA") return;
+  el.innerHTML = ekip.map(m => `<article class="member" data-id="${esc(m.id)}">
+    <div class="m-top"><div class="avatar">${m.foto ? `<img src="${esc(m.foto)}" alt="${esc(m.ad)}">` : esc(ini(m.ad))}<label>${m.foto ? "Değiştir" : "Fotoğraf ekle"}<input type="file" accept="image/*" class="m-foto"></label></div>
+      <div style="min-width:0"><div class="m-name">${esc(m.ad)}</div><span class="badge">${esc(m.unvan || "Kurucu Ortak / Co-founder")}</span></div></div>
+    ${EDIT === m.id ? `<form class="m-form"><input class="m-rolin" value="${esc(m.rol || "")}" placeholder="Rol (ör. İçerik & Strateji)"><textarea class="m-sorin" placeholder="Her satıra bir sorumluluk">${esc((m.sorumluluklar || []).join("\n"))}</textarea><div style="display:flex;gap:8px"><button class="btn">Kaydet</button><button type="button" class="m-edit m-cancel">Vazgeç</button></div></form>`
+      : `<div class="m-rol">${esc(m.rol || "")}</div><ul class="m-list">${(m.sorumluluklar || []).map(s => `<li>${esc(s)}</li>`).join("")}</ul><button type="button" class="m-edit">Rol ve sorumlulukları düzenle</button>`}
+  </article>`).join("");
+  el.querySelectorAll(".member").forEach(c => {
+    const id = c.dataset.id, m = ekip.find(x => x.id === id);
+    const ed = c.querySelector(".m-edit:not(.m-cancel)"); if (ed) ed.onclick = () => { EDIT = id; renderEkip(); };
+    const cn = c.querySelector(".m-cancel"); if (cn) cn.onclick = () => { EDIT = null; renderEkip(); };
+    const f = c.querySelector(".m-form"); if (f) f.onsubmit = e => { e.preventDefault(); const rol = c.querySelector(".m-rolin").value.trim(), sor = c.querySelector(".m-sorin").value.split("\n").map(s => s.trim()).filter(Boolean);
+      EDIT = null; setDoc(doc(db, "ekip", id), { rol, sorumluluklar: sor }, { merge: true }).then(() => flash("Kaydedildi")).catch(() => flash("Kaydedilemedi")); };
+    c.querySelector(".m-foto").onchange = async ev => {
+      const file = ev.target.files[0]; if (!file) return; flash("Fotoğraf hazırlanıyor…");
+      try { const url = await kucult(file, 320); await setDoc(doc(db, "ekip", id), { foto: url }, { merge: true }); flash("Fotoğraf kaydedildi"); } catch (e) { flash("Fotoğraf yüklenemedi"); }
+    };
+  });
+}
+function kucult(file, S) { return new Promise((res, rej) => { const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); c.width = c.height = S; const k = Math.min(img.width, img.height), sx = (img.width - k) / 2, sy = (img.height - k) / 2; c.getContext("2d").drawImage(img, sx, sy, k, k, 0, 0, S, S); URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg", .82)); }; img.onerror = rej; img.src = URL.createObjectURL(file); }); }
+window.juvemiEkipKur = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(x => b.set(doc(db, "ekip", x.id), x.data, { merge: true })); await b.commit(); return "tamam"; };
+
 /* ---------- otomatik güncelleme ---------- */
 setInterval(async () => {
   try { const v = (await (await fetch("version.txt?t=" + Date.now(), { cache: "no-store" })).text()).trim();
@@ -310,6 +339,7 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "giderler"), orderBy("tarih", "desc")), s => { giderler = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderGider(); renderGenel(); renderTabs(); }, () => flash("Giderler okunamadı")));
   unsub.push(onSnapshot(query(collection(db, "etkinlikler"), orderBy("tarih")), s => { etk = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "sermaye"), orderBy("tarih", "desc")), s => { sermaye = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
+  unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "gunluk"), orderBy("ts", "desc")), s => { gunluk = s.docs.map(d => d.data()); renderGenel(); }));
   unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && document.activeElement.tagName === "TEXTAREA")) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
