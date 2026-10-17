@@ -57,30 +57,50 @@ onAuthStateChanged(auth, u => {
   start(kadi);
 });
 
+const IC = {
+  home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
+  pano: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  gorev: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/>',
+  takvim: '<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  gider: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  butce: '<path d="M21 12A9 9 0 1 1 12 3"/><path d="M12 3a9 9 0 0 1 9 9h-9z"/>',
+  finans: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v.01M18 14.5v.01"/>',
+  urunler: '<path d="m12 2.5 8.5 4.5v10L12 21.5 3.5 17V7z"/><path d="m3.5 7 8.5 4.5L20.5 7M12 11.5v10"/>',
+  musteriler: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.5 3.2-5.5 6.5-5.5s5.9 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.7.7 2.8 2.4 3 5.2"/>',
+  pazarlama: '<path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z"/><path d="M17 8.5a5 5 0 0 1 0 7"/>',
+  magaza: '<path d="M3.5 9 5 3.5h14L20.5 9"/><path d="M3.5 9a2.8 2.8 0 0 0 5.6 0 2.8 2.8 0 0 0 5.8 0 2.8 2.8 0 0 0 5.6 0"/><path d="M5 11.5V21h14v-9.5M10 21v-5h4v5"/>',
+  sirket: '<path d="M12 3v18M5 7h14M7.5 7 4 14a3.5 3.5 0 0 0 7 0zM16.5 7 13 14a3.5 3.5 0 0 0 7 0z"/><path d="M8 21h8"/>',
+  ekip: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.7-4 3.4-6.5 7-6.5s6.3 2.5 7 6.5"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/>',
+  auto: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  dot: '<circle cx="12" cy="12" r="3"/>'
+};
+const svg = (k, s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k] || IC.dot}</svg>`;
 /* ---------- uygulamalar ---------- */
 const APPS = [
-  { id: "genel", ad: "Pano", renk: "#7090A3", ik: "▤", alt: () => "Özet, riskler, günlük" },
-  { id: "gorevler", ad: "Görevlerim", renk: "#3F8F5F", ik: "✓", alt: () => { const n = (panel.gorevler || []).filter(t => t.durum !== "bitti").length; return n + " açık görev"; } },
-  { id: "takvim", ad: "Takvim", renk: "#E0A83A", ik: "▦", alt: () => { const t = bugun(), n = etk.filter(e => e.tarih >= t).length; return n ? n + " yaklaşan etkinlik" : "Ortak + kişisel"; } },
-  { id: "giderler", ad: "Giderler", renk: "#C8463E", ik: "₺", alt: () => TL(giderler.reduce((s, g) => s + (+g.tutar || 0), 0)) },
-  { id: "butce", ad: "Bütçe & Sermaye", renk: "#8A7FB5", ik: "%", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
+  { id: "genel", ad: "Pano", renk: "#5B7FA0", ik: "pano", alt: () => "Özet, riskler, günlük" },
+  { id: "gorevler", ad: "Görevlerim", renk: "#3F8F5F", ik: "gorev", alt: () => { const n = (panel.gorevler || []).filter(t => t.durum !== "bitti").length; return n + " açık görev"; } },
+  { id: "takvim", ad: "Takvim", renk: "#C98A1B", ik: "takvim", alt: () => { const t = bugun(), n = etk.filter(e => e.tarih >= t).length; return n ? n + " yaklaşan etkinlik" : "Ortak + kişisel"; } },
+  { id: "giderler", ad: "Giderler", renk: "#C8463E", ik: "gider", alt: () => TL(giderler.reduce((s, g) => s + (+g.tutar || 0), 0)) },
+  { id: "butce", ad: "Bütçe & Sermaye", renk: "#7A6CB0", ik: "butce", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
 $("logo").onclick = () => go("ana");
-const TEMA = ["", "light", "dark"], TEMAAD = { "": "Sistem teması", light: "Açık tema", dark: "Koyu tema" }, TEMAIK = { "": "A", light: "☀", dark: "☾" };
-function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; $("themelbl").textContent = TEMAAD[t]; $("themebtn").querySelector(".si").textContent = TEMAIK[t]; $("themebtn").title = TEMAAD[t] + " (değiştirmek için tıkla)"; }
+const TEMA = ["", "light", "dark"], TEMAAD = { "": "Sistem teması", light: "Açık tema", dark: "Koyu tema" }, TEMAIK = { "": "auto", light: "sun", dark: "moon" };
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; $("themelbl").textContent = TEMAAD[t]; $("themebtn").querySelector(".si").innerHTML = svg(TEMAIK[t]); $("themebtn").title = TEMAAD[t] + " (değiştirmek için tıkla)"; }
 let THEME = (() => { try { return localStorage.getItem("juvemi-theme") || ""; } catch (e) { return ""; } })(); applyTheme(THEME);
 $("themebtn").onclick = () => { THEME = TEMA[(TEMA.indexOf(THEME) + 1) % 3]; try { localStorage.setItem("juvemi-theme", THEME); } catch (e) { } applyTheme(THEME); };
 function renderTabs() {
   const mod = mods.find(m => m.id === TAB), app = APPS.find(x => x.id === TAB && !x.yakinda);
   if (!mod && !app && TAB !== "ana" && mods.length) TAB = "ana";
   $("apptitle").textContent = mod ? mod.ad : (app ? app.ad : "Uygulamalar");
-  $("sidenav").innerHTML = `<button type="button" class="nav-i" data-t="ana"${TAB === "ana" ? ' aria-current="page"' : ""} title="Ana ekran"><span class="si" style="background:var(--ink);color:var(--bg)">⌂</span><span class="sl">Ana ekran</span></button>`
-    + APPS.map(x => `<button type="button" class="nav-i" data-t="${x.id}"${x.yakinda ? " disabled" : ""}${TAB === x.id ? ' aria-current="page"' : ""} title="${esc(x.ad)}"><span class="si" style="background:${x.renk}">${x.ik}</span><span class="sl">${esc(x.ad)}</span></button>`).join("")
-    + (mods.length ? `<div class="side-sep">Şirket</div>` + mods.map(m => `<button type="button" class="nav-i nm" data-t="${esc(m.id)}"${TAB === m.id ? ' aria-current="page"' : ""} title="${esc(m.ad)}"><span class="si">${esc((m.ad || "?").slice(0, 2))}</span><span class="sl">${esc(m.ad)}</span></button>`).join("") : "");
+  $("sidenav").innerHTML = `<button type="button" class="nav-i" data-t="ana"${TAB === "ana" ? ' aria-current="page"' : ""} title="Ana ekran"><span class="si">${svg("home")}</span><span class="sl">Ana ekran</span></button>`
+    + APPS.map(x => `<button type="button" class="nav-i" data-t="${x.id}"${x.yakinda ? " disabled" : ""}${TAB === x.id ? ' aria-current="page"' : ""} title="${esc(x.ad)}"><span class="si" style="--c:${x.renk}">${svg(x.ik)}</span><span class="sl">${esc(x.ad)}</span></button>`).join("")
+    + (mods.length ? `<div class="side-sep">Şirket</div>` + mods.map(m => `<button type="button" class="nav-i nm" data-t="${esc(m.id)}"${TAB === m.id ? ' aria-current="page"' : ""} title="${esc(m.ad)}"><span class="si">${svg(m.id)}</span><span class="sl">${esc(m.ad)}</span></button>`).join("") : "");
   $("sidenav").querySelectorAll(".nav-i:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
   document.querySelectorAll(".pane").forEach(p => p.hidden = !(p.dataset.pane === TAB || (mod && p.dataset.pane === "mod")));
-  $("apps").innerHTML = APPS.map(x => `<button type="button" class="app" data-t="${x.id}"${x.yakinda ? " disabled" : ""}><i style="background:${x.renk}">${x.ik}</i><b>${esc(x.ad)}</b><span>${esc(x.alt())}</span></button>`).join("");
+  $("apps").innerHTML = APPS.map(x => `<button type="button" class="app" data-t="${x.id}"${x.yakinda ? " disabled" : ""}><i style="--c:${x.renk}">${svg(x.ik, 24)}</i><b>${esc(x.ad)}</b><span>${esc(x.alt())}</span></button>`).join("");
   $("apps").querySelectorAll(".app:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
   if (mod) $("modpane").innerHTML = `<section><p class="muted" style="margin:0 0 12px">${esc(mod.aciklama)}</p><div class="mods">${(mod.bolumler || []).map(b => `<div class="mod"><div class="row"><b>${esc(b.ad)}</b><span class="tag ${esc(b.durum)}">${TAG[b.durum] || esc(b.durum)}</span></div>${b.not ? `<div class="muted">${esc(b.not)}</div>` : ""}</div>`).join("")}</div></section>`;
   if (TAB === "takvim") renderCal();
@@ -135,7 +155,7 @@ function renderGenel() {
     $("facts").innerHTML = (ozet.netlesenler || []).map(f => `<div class="fact${f.acik ? " pend" : ""}"><b>${esc(f.b)}</b><span>${esc(f.v)}</span></div>`).join("") || '<div class="empty">Henüz kayıt yok.</div>';
     $("risks").innerHTML = (ozet.riskler || []).map(r => `<li>${esc(r)}</li>`).join("");
   } else $("facts").innerHTML = '<div class="empty">Henüz kayıt yok.</div>';
-  $("ov").innerHTML = mods.map(m => { const B = m.bolumler || [], n = B.filter(b => b.durum !== "bos").length; return `<button class="fact ovc" data-t="${esc(m.id)}"><b>${esc(m.ad)}</b><span>${n} / ${B.length} başladı</span></button>`; }).join("");
+  $("ov").innerHTML = mods.map(m => { const B = m.bolumler || [], n = B.filter(b => b.durum !== "bos").length; return `<button class="fact ovc" data-t="${esc(m.id)}"><b style="display:flex;align-items:center;gap:8px">${svg(m.id, 16)}${esc(m.ad)}</b><span>${n} / ${B.length} başladı</span></button>`; }).join("");
   const top = giderler.reduce((s, g) => s + (+g.tutar || 0), 0);
   $("gozet").innerHTML = `<button class="fact ovc" data-t="giderler"><b>Toplam harcama</b><span>${TL(top)}</span></button><button class="fact ovc" data-t="giderler"><b>Kayıt sayısı</b><span>${giderler.length} gider</span></button>`;
   document.querySelectorAll("#ov .ovc,#gozet .ovc").forEach(b => b.onclick = () => go(b.dataset.t));
@@ -256,7 +276,7 @@ $("smform").onsubmit = e => {
 /* ---------- otomatik güncelleme ---------- */
 setInterval(async () => {
   try { const v = (await (await fetch("version.txt?t=" + Date.now(), { cache: "no-store" })).text()).trim();
-    if (v && window.JV && v !== window.JV && !window.JV.startsWith("__")) { const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.value)) location.reload(); }
+    if (v && window.JV && v !== window.JV && !window.JV.startsWith("__")) { const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.value)) location.replace(location.pathname + "?v=" + v + location.hash); }
   } catch (e) { }
 }, 60000);
 

@@ -175,6 +175,16 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
   header{margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:12px max(16px,env(safe-area-inset-left,0px))}
   .pagetitle{font-size:18px}
 }
+
+/* ---------- minimal ikonlar ---------- */
+.app i{background:color-mix(in srgb,var(--c) 13%,transparent)!important;color:var(--c);box-shadow:none!important;width:48px;height:48px;border-radius:14px}
+:root[data-theme="dark"] .app i{color:color-mix(in srgb,var(--c) 70%,#fff)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .app i{color:color-mix(in srgb,var(--c) 70%,#fff)}}
+.si{background:transparent!important;color:var(--muted)!important;width:30px;height:30px}
+.nav-i:hover .si,.nav-i[aria-current=page] .si{color:var(--ink)!important}
+.nav-i[aria-current=page] .si{color:var(--c,var(--ink))!important}
+.side-theme .si{color:var(--ink)!important}
+.ovc b svg{color:var(--muted)}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -189,7 +199,7 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 <aside class="side" id="side">
   <button type="button" class="side-logo" id="logo" title="Ana ekran"><span class="logo">Juvé<span class="m">m</span><span class="i">i</span></span><span class="logo-mini">J<span class="i">·</span></span></button>
   <nav class="side-nav" id="sidenav" aria-label="Uygulamalar"></nav>
-  <button type="button" class="side-theme" id="themebtn"><span class="si">A</span><span class="sl" id="themelbl">Tema</span></button>
+  <button type="button" class="side-theme" id="themebtn"><span class="si"></span><span class="sl" id="themelbl">Tema</span></button>
 </aside>
 <div class="wrap">
   <header>
@@ -283,6 +293,6 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 </div>
 </div>
 
-<script>window.JV="20261017180030";</script>
-<script type="module" src="app.js?v=20261017180030"></script>
+<script>window.JV="20261017180247";</script>
+<script type="module" src="app.js?v=20261017180247"></script>
 </body></html>
