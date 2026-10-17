@@ -59,18 +59,26 @@ onAuthStateChanged(auth, u => {
 
 /* ---------- uygulamalar ---------- */
 const APPS = [
-  { id: "genel", ad: "Pano", renk: "#7090A3", ik: "◧", alt: () => "Özet, riskler, günlük" },
+  { id: "genel", ad: "Pano", renk: "#7090A3", ik: "▤", alt: () => "Özet, riskler, günlük" },
   { id: "gorevler", ad: "Görevlerim", renk: "#3F8F5F", ik: "✓", alt: () => { const n = (panel.gorevler || []).filter(t => t.durum !== "bitti").length; return n + " açık görev"; } },
   { id: "takvim", ad: "Takvim", renk: "#E0A83A", ik: "▦", alt: () => { const t = bugun(), n = etk.filter(e => e.tarih >= t).length; return n ? n + " yaklaşan etkinlik" : "Ortak + kişisel"; } },
   { id: "giderler", ad: "Giderler", renk: "#C8463E", ik: "₺", alt: () => TL(giderler.reduce((s, g) => s + (+g.tutar || 0), 0)) },
-  { id: "butce", ad: "Bütçe & Sermaye", renk: "#8A7FB5", ik: "◔", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
+  { id: "butce", ad: "Bütçe & Sermaye", renk: "#8A7FB5", ik: "%", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
-$("homebtn").onclick = () => go("ana");
+$("logo").onclick = () => go("ana");
+const TEMA = ["", "light", "dark"], TEMAAD = { "": "Sistem teması", light: "Açık tema", dark: "Koyu tema" }, TEMAIK = { "": "A", light: "☀", dark: "☾" };
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; $("themelbl").textContent = TEMAAD[t]; $("themebtn").querySelector(".si").textContent = TEMAIK[t]; $("themebtn").title = TEMAAD[t] + " (değiştirmek için tıkla)"; }
+let THEME = (() => { try { return localStorage.getItem("juvemi-theme") || ""; } catch (e) { return ""; } })(); applyTheme(THEME);
+$("themebtn").onclick = () => { THEME = TEMA[(TEMA.indexOf(THEME) + 1) % 3]; try { localStorage.setItem("juvemi-theme", THEME); } catch (e) { } applyTheme(THEME); };
 function renderTabs() {
   const mod = mods.find(m => m.id === TAB), app = APPS.find(x => x.id === TAB && !x.yakinda);
   if (!mod && !app && TAB !== "ana" && mods.length) TAB = "ana";
-  $("appbar").hidden = TAB === "ana"; $("apptitle").textContent = mod ? mod.ad : (app ? app.ad : "");
+  $("apptitle").textContent = mod ? mod.ad : (app ? app.ad : "Uygulamalar");
+  $("sidenav").innerHTML = `<button type="button" class="nav-i" data-t="ana"${TAB === "ana" ? ' aria-current="page"' : ""} title="Ana ekran"><span class="si" style="background:var(--ink);color:var(--bg)">⌂</span><span class="sl">Ana ekran</span></button>`
+    + APPS.map(x => `<button type="button" class="nav-i" data-t="${x.id}"${x.yakinda ? " disabled" : ""}${TAB === x.id ? ' aria-current="page"' : ""} title="${esc(x.ad)}"><span class="si" style="background:${x.renk}">${x.ik}</span><span class="sl">${esc(x.ad)}</span></button>`).join("")
+    + (mods.length ? `<div class="side-sep">Şirket</div>` + mods.map(m => `<button type="button" class="nav-i nm" data-t="${esc(m.id)}"${TAB === m.id ? ' aria-current="page"' : ""} title="${esc(m.ad)}"><span class="si">${esc((m.ad || "?").slice(0, 2))}</span><span class="sl">${esc(m.ad)}</span></button>`).join("") : "");
+  $("sidenav").querySelectorAll(".nav-i:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
   document.querySelectorAll(".pane").forEach(p => p.hidden = !(p.dataset.pane === TAB || (mod && p.dataset.pane === "mod")));
   $("apps").innerHTML = APPS.map(x => `<button type="button" class="app" data-t="${x.id}"${x.yakinda ? " disabled" : ""}><i style="background:${x.renk}">${x.ik}</i><b>${esc(x.ad)}</b><span>${esc(x.alt())}</span></button>`).join("");
   $("apps").querySelectorAll(".app:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
