@@ -491,44 +491,74 @@ function renderChat() {
   let son = "";
   el.innerHTML = L.map(m => { const d = new Date(m.ts), g = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" }), kisi = ekip.find(x => x.id === m.kadi) || { ad: m.ad || m.kadi };
     const sep = g !== son ? `<div class="daysep">${esc(g)}</div>` : ""; son = g;
-    const govde = m.tur === "dosya" ? `${m.metin ? `<div class="md">${md(m.metin)}</div>` : ""}<a class="file" href="${esc(lnk(m.url) || "#")}" target="_blank" rel="noopener"><i>${esc(dosyaTur(m.url, m.dosyaAd))}</i><span style="min-width:0"><b>${esc(m.dosyaAd || "Drive dosyası")}</b><span>Google Drive'da aç</span></span></a>` : `<div class="md">${md(m.metin)}</div>`;
+    const govde = m.tur === "dosya" ? `${m.html ? `<div class="md">${temiz(m.html)}</div>` : m.metin ? `<div class="md">${md(m.metin)}</div>` : ""}<a class="file" href="${esc(lnk(m.url) || "#")}" target="_blank" rel="noopener"><i>${esc(dosyaTur(m.url, m.dosyaAd))}</i><span style="min-width:0"><b>${esc(m.dosyaAd || "Drive dosyası")}</b><span>Google Drive'da aç</span></span></a>` : `<div class="md">${m.html ? temiz(m.html) : md(m.metin)}</div>`;
     return sep + `<div class="msg${m.kadi === KADI ? " me" : ""}"><span class="ou">${kisi.foto ? `<img src="${esc(kisi.foto)}" alt="">` : esc(ini(kisi.ad))}</span><div class="bub">${m.kadi === KADI ? "" : `<b class="nm">${esc((kisi.ad || "").split(" ")[0])}</b>`}${govde}<time>${d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time></div></div>`; }).join("");
   if (alt || L.length !== chatN && L[L.length - 1].kadi === KADI) el.scrollTop = el.scrollHeight; chatN = L.length; chatK = KANAL;
 }
-function gonder() { const v = $("chattext").value.trim(); if (!v) return; $("chattext").value = ""; $("chattext").style.height = "";
-  addDoc(collection(db, "mesajlar"), { metin: v, kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() }).catch(() => { flash("Gönderilemedi"); $("chattext").value = v; }); }
-$("chatform").onsubmit = e => { e.preventDefault(); gonder(); };
-$("chattext").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); gonder(); } });
-$("chattext").addEventListener("input", e => { const t = e.target; t.style.height = "auto"; t.style.height = Math.min(140, t.scrollHeight) + "px"; });
+/* --- zengin metin editörü --- */
 const TA = () => $("chattext");
-function sar(on, son = on, ph = "metin") { const t = TA(), a0 = t.selectionStart, b0 = t.selectionEnd, sec = t.value.slice(a0, b0) || ph;
-  t.setRangeText(on + sec + son, a0, b0, "end"); t.focus(); t.selectionStart = a0 + on.length; t.selectionEnd = a0 + on.length + sec.length; t.dispatchEvent(new Event("input")); }
-function satirBasi(fn) { const t = TA(), v = t.value, a0 = v.lastIndexOf("\n", t.selectionStart - 1) + 1, b0 = t.selectionEnd, parca = v.slice(a0, b0).split("\n");
-  t.setRangeText(parca.map(fn).join("\n"), a0, b0, "end"); t.focus(); t.dispatchEvent(new Event("input")); }
-const FMT = { b: () => sar("*"), i: () => sar("_"), u: () => sar("__"), s: () => sar("~"), code: () => sar("`", "`", "kod"), pre: () => sar("```\n", "\n```", "kod"),
-  link: () => sar("[", "](https://)", "bağlantı metni"),
-  ul: () => satirBasi(l => "- " + l), ol: () => satirBasi((l, i) => (i + 1) + ". " + l), q: () => satirBasi(l => "> " + l) };
-$("cmptools").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => FMT[b.dataset.f](); });
-TA().addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && !e.shiftKey) { const k = { b: "b", i: "i", u: "u" }[e.key.toLowerCase()]; if (k) { e.preventDefault(); FMT[k](); } } });
+const IZIN = { B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, STRIKE: 1, DEL: 1, A: 1, UL: 1, OL: 1, LI: 1, BLOCKQUOTE: 1, CODE: 1, PRE: 1, BR: 1, DIV: 1, P: 1, SPAN: 1 };
+function temiz(html) {
+  const d = new DOMParser().parseFromString("<div>" + (html || "") + "</div>", "text/html"), kok = d.body.firstChild;
+  (function gez(n) { [...n.childNodes].forEach(c => {
+    if (c.nodeType === 3) return; if (c.nodeType !== 1 || !IZIN[c.tagName]) { if (c.nodeType === 1 && !/^(SCRIPT|STYLE|IFRAME|OBJECT)$/.test(c.tagName)) { gez(c); c.replaceWith(...c.childNodes); } else c.remove(); return; }
+    const href = c.tagName === "A" ? c.getAttribute("href") : null, cls = c.getAttribute("class");
+    [...c.attributes].forEach(at => c.removeAttribute(at.name));
+    if (href && /^https?:\/\//i.test(href)) { c.setAttribute("href", href); c.setAttribute("target", "_blank"); c.setAttribute("rel", "noopener"); }
+    if (c.tagName === "SPAN" && cls === "ment") c.setAttribute("class", "ment");
+    gez(c); }); })(kok);
+  return kok.innerHTML;
+}
+function otoLink(root) { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), L = []; while (w.nextNode()) { const t = w.currentNode; if (!t.parentElement.closest("a,code,pre") && /https?:\/\//.test(t.nodeValue)) L.push(t); }
+  L.forEach(t => { const f = document.createDocumentFragment(); t.nodeValue.split(/(https?:\/\/[^\s]+)/g).forEach((p, k) => { if (k % 2) { const a = document.createElement("a"); a.href = p; a.textContent = p.length > 60 ? p.slice(0, 57) + "…" : p; f.appendChild(a); } else if (p) f.appendChild(document.createTextNode(p)); }); t.replaceWith(f); }); }
+function editorIcerik() { const el = TA(), kopya = el.cloneNode(true); otoLink(kopya); const html = temiz(kopya.innerHTML).replace(/(<br>|<div><br><\/div>|\s|&nbsp;)+$/g, ""); return { html, metin: el.innerText.trim() }; }
+function editorTemizle() { TA().innerHTML = ""; }
+function gonder() { const { html, metin } = editorIcerik(); if (!metin) return; editorTemizle();
+  addDoc(collection(db, "mesajlar"), { html, metin, kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() }).catch(() => { flash("Gönderilemedi"); TA().innerHTML = html; }); }
+$("chatform").onsubmit = e => { e.preventDefault(); gonder(); };
+let SEC = null; const secKaydet = () => { const s = getSelection(); if (s.rangeCount && TA().contains(s.anchorNode)) SEC = s.getRangeAt(0).cloneRange(); };
+const secYukle = () => { TA().focus(); if (SEC) { const s = getSelection(); s.removeAllRanges(); s.addRange(SEC); } };
+document.addEventListener("selectionchange", () => { secKaydet(); durumGuncelle(); });
+const icinde = sel => { const s = getSelection(); return s.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement).closest(sel) && TA().contains(s.anchorNode); };
+TA().addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { if (icinde("li,pre,blockquote")) return; e.preventDefault(); gonder(); return; }
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey) { const k = { b: "b", i: "i", u: "u", k: "link" }[e.key.toLowerCase()]; if (k) { e.preventDefault(); FMT[k](); } }
+});
+TA().addEventListener("paste", e => { e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, t); });
+function kodSar() { const s = getSelection(); if (!s.rangeCount) return; const r = s.getRangeAt(0), metin = r.toString() || "kod"; const c = document.createElement("code"); c.textContent = metin; r.deleteContents(); r.insertNode(c); r.setStartAfter(c); r.collapse(true); s.removeAllRanges(); s.addRange(r); document.execCommand("insertText", false, "​"); }
+const FMT = {
+  b: () => document.execCommand("bold"), i: () => document.execCommand("italic"), u: () => document.execCommand("underline"), s: () => document.execCommand("strikeThrough"),
+  ul: () => document.execCommand("insertUnorderedList"), ol: () => document.execCommand("insertOrderedList"),
+  q: () => document.execCommand("formatBlock", false, icinde("blockquote") ? "div" : "blockquote"), pre: () => document.execCommand("formatBlock", false, icinde("pre") ? "div" : "pre"),
+  code: () => kodSar(),
+  link: () => { secKaydet(); $("linkbox").hidden = false; $("linkurl").value = ""; $("linkurl").focus(); }
+};
+$("linkok").onclick = () => { const u = $("linkurl").value.trim(); $("linkbox").hidden = true; if (!/^https?:\/\//.test(u)) { secYukle(); return; } secYukle();
+  const s = getSelection(); if (s.isCollapsed) document.execCommand("insertHTML", false, `<a href="${esc(u)}">${esc(u)}</a>&nbsp;`); else document.execCommand("createLink", false, u); };
+$("linkurl").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("linkok").click(); } if (e.key === "Escape") { $("linkbox").hidden = true; secYukle(); } });
+$("linkiptal").onclick = () => { $("linkbox").hidden = true; secYukle(); };
+$("cmptools").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { if (!TA().contains(getSelection().anchorNode)) secYukle(); FMT[b.dataset.f](); durumGuncelle(); }; });
+function durumGuncelle() { if (!TA().contains(getSelection().anchorNode)) return; const D = { b: "bold", i: "italic", u: "underline", s: "strikeThrough", ul: "insertUnorderedList", ol: "insertOrderedList" };
+  $("cmptools").querySelectorAll("button").forEach(b => { const c = D[b.dataset.f]; let on = false; try { on = c ? document.queryCommandState(c) : b.dataset.f === "q" ? !!icinde("blockquote") : b.dataset.f === "pre" ? !!icinde("pre") : b.dataset.f === "code" ? !!icinde("code") : false; } catch (e) { } b.classList.toggle("act", on); }); }
 let ARAC = (() => { try { return localStorage.getItem("juvemi-arac") !== "0"; } catch (e) { return true; } })();
 function aracUygula() { $("cmptools").classList.toggle("off", !ARAC); $("aa").classList.toggle("on", ARAC); } aracUygula();
 $("aa").onclick = () => { ARAC = !ARAC; try { localStorage.setItem("juvemi-arac", ARAC ? "1" : "0"); } catch (e) { } aracUygula(); };
 const EMO = "😀 😂 🥰 😊 😉 😍 🤩 😎 🤔 😅 😴 😢 😮 🙏 👍 👎 👏 🙌 💪 👀 🎉 🎊 🔥 ✨ ⭐ 💡 ✅ ❌ ⚠️ 📌 📎 📝 📅 ⏰ 💰 🛒 📦 🎁 🧸 🎨 ✏️ 📚 🧩 🌈 🌸 🍀 ❤️ 💛 💙 🚀 🎯 📣 💬 ☕".split(" ");
 $("emojipop").innerHTML = EMO.map(e => `<button type="button">${e}</button>`).join("");
-$("emojipop").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { TA().setRangeText(b.textContent, TA().selectionStart, TA().selectionEnd, "end"); TA().focus(); $("emojipop").hidden = true; }; });
-function mentionAc() { $("mentionpop").innerHTML = [["herkes", "herkes"]].concat(ORTAKLAR).map(([k, ad]) => { const m = ekip.find(x => x.id === k); return `<button type="button" data-ad="${esc(ad === "herkes" ? "herkes" : ad)}"><span class="ou">${m && m.foto ? `<img src="${esc(m.foto)}" alt="">` : esc(ini(ad))}</span>@${esc(ad)}</button>`; }).join("");
-  $("mentionpop").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { const t = TA(), p = t.selectionStart, onceki = t.value.slice(0, p).endsWith("@") ? 1 : 0; t.setRangeText("@" + b.dataset.ad + " ", p - onceki, t.selectionEnd, "end"); t.focus(); $("mentionpop").hidden = true; }; });
+$("emojipop").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { secYukle(); document.execCommand("insertText", false, b.textContent); $("emojipop").hidden = true; }; });
+function mentionAc(silAt) { $("mentionpop").innerHTML = [["herkes", "herkes"]].concat(ORTAKLAR).map(([k, ad]) => { const m = ekip.find(x => x.id === k); return `<button type="button" data-ad="${esc(ad)}"><span class="ou">${m && m.foto ? `<img src="${esc(m.foto)}" alt="">` : esc(ini(ad))}</span>@${esc(ad)}</button>`; }).join("");
+  $("mentionpop").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { secYukle(); if (silAt) document.execCommand("delete"); document.execCommand("insertHTML", false, `<span class="ment" contenteditable="false">@${esc(b.dataset.ad)}</span>&nbsp;`); $("mentionpop").hidden = true; }; });
   $("mentionpop").hidden = false; $("emojipop").hidden = true; }
-$("emojibtn").onclick = () => { $("emojipop").hidden = !$("emojipop").hidden; $("mentionpop").hidden = true; };
-$("mentionbtn").onclick = () => $("mentionpop").hidden ? mentionAc() : ($("mentionpop").hidden = true);
-TA().addEventListener("input", e => { const t = e.target, v = t.value.slice(0, t.selectionStart); if (/(^|\s)@$/.test(v)) mentionAc(); });
+$("emojibtn").onclick = () => { secKaydet(); $("emojipop").hidden = !$("emojipop").hidden; $("mentionpop").hidden = true; };
+$("mentionbtn").onclick = () => { secKaydet(); $("mentionpop").hidden ? mentionAc(false) : ($("mentionpop").hidden = true); };
+TA().addEventListener("input", e => { if (e.data === "@") { secKaydet(); mentionAc(true); } });
 document.addEventListener("click", e => { if (!e.target.closest("#emojipop,#emojibtn,#mentionpop,#mentionbtn")) { $("emojipop").hidden = true; $("mentionpop").hidden = true; } });
 $("gorusbtn").onclick = () => { addDoc(collection(db, "mesajlar"), { metin: "🎥 Görüntülü görüşme başlattı — katılmak için Görüntülü Görüşme sayfasına geç.", kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() }).catch(() => { }); go("toplanti"); setTimeout(() => $("meetstart").click(), 300); };
 $("dosyaekle").onclick = () => { const K = kanallar.find(k => k.id === KANAL); if (K && lnk(K.klasor)) window.open(K.klasor, "_blank", "noopener"); $("dosyabar").hidden = false; $("dosyalink").focus(); };
 $("dosyakapat").onclick = () => { $("dosyabar").hidden = true; };
 $("dosyagonder").onclick = () => { const u = $("dosyalink").value.trim(); if (!lnk(u)) { flash("Geçerli bir Drive bağlantısı yapıştır"); return; }
-  addDoc(collection(db, "mesajlar"), { tur: "dosya", url: u, dosyaAd: $("dosyaad").value.trim(), metin: $("chattext").value.trim(), kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() })
-    .then(() => { $("dosyalink").value = ""; $("dosyaad").value = ""; $("chattext").value = ""; $("dosyabar").hidden = true; flash("Dosya paylaşıldı"); }).catch(() => flash("Paylaşılamadı")); };
+  addDoc(collection(db, "mesajlar"), { tur: "dosya", url: u, dosyaAd: $("dosyaad").value.trim(), ...(() => { const c = editorIcerik(); return { metin: c.metin, html: c.html }; })(), kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() })
+    .then(() => { $("dosyalink").value = ""; $("dosyaad").value = ""; editorTemizle(); $("dosyabar").hidden = true; flash("Dosya paylaşıldı"); }).catch(() => flash("Paylaşılamadı")); };
 $("k-yeni").onclick = () => { $("kf-uye").innerHTML = ORTAKLAR.map(([k, ad]) => `<label><input type="checkbox" value="${k}" checked> ${ad}</label>`).join(""); $("k-form").hidden = false; $("kf-ad").focus(); };
 $("kf-iptal").onclick = () => { $("k-form").hidden = true; };
 $("k-form").onsubmit = e => { e.preventDefault(); const ad = $("kf-ad").value.trim().toLocaleLowerCase("tr-TR").replace(/[^a-z0-9çğıöşü-]+/g, "-").replace(/^-+|-+$/g, ""); if (!ad) return;

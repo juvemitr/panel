@@ -372,6 +372,16 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ment{background:color-mix(in srgb,var(--mustard) 22%,transparent);color:var(--ink);border-radius:5px;padding:0 3px;font-weight:700}
 .bub .md{white-space:normal}.bub .md p{margin:0}
 @media (max-width:600px){.cmp-ipucu{display:none}.cmp-tools{overflow-x:auto}}
+
+.ce{min-height:44px;max-height:200px;overflow-y:auto;padding:10px 12px;font-size:14.5px;line-height:1.5;outline:none;overflow-wrap:anywhere}
+.ce:empty::before{content:attr(data-ph);color:var(--muted);pointer-events:none}
+.ce ul,.ce ol{margin:2px 0;padding-left:22px}.ce blockquote{margin:2px 0;padding-left:10px;border-left:3px solid var(--line);color:var(--muted)}
+.ce code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:5px;padding:1px 5px}
+.ce pre{margin:2px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:8px;padding:8px 10px;white-space:pre-wrap}
+.ce a,.bub .md a{color:var(--slate);font-weight:600}
+.cmp-tools button.act{background:color-mix(in srgb,var(--slate) 20%,transparent);color:var(--ink)}
+.linkbox{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line)}.linkbox input{flex:1}
+.bub .md p,.bub .md div{margin:0}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -445,12 +455,13 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="chat-list" id="chatlist"><div class="empty">Mesajlar yükleniyor…</div></div>
         <div class="dosya-bar" id="dosyabar" hidden><span class="muted">1) Kanal klasörü yeni sekmede açıldı, dosyanı oraya sürükle. 2) Dosyaya sağ tık → Bağlantıyı kopyala → buraya yapıştır:</span><div style="display:flex;gap:6px"><input id="dosyalink" type="url" placeholder="https://drive.google.com/file/d/…" style="flex:1"><input id="dosyaad" placeholder="Dosya adı (isteğe bağlı)" style="flex:.6"><button type="button" class="btn" id="dosyagonder">Paylaş</button><button type="button" class="btn dark" id="dosyakapat">✕</button></div></div>
         <form class="composer" id="chatform">
+          <div class="linkbox" id="linkbox" hidden><input id="linkurl" type="url" placeholder="https://…"><button type="button" class="btn" id="linkok">Ekle</button><button type="button" class="btn dark" id="linkiptal">✕</button></div>
           <div class="cmp-tools" id="cmptools">
             <button type="button" data-f="b" title="Kalın (Ctrl+B)"><b>B</b></button><button type="button" data-f="i" title="İtalik (Ctrl+I)"><i>I</i></button><button type="button" data-f="u" title="Altı çizili (Ctrl+U)"><u>U</u></button><button type="button" data-f="s" title="Üstü çizili"><s>S</s></button><span class="sep"></span>
             <button type="button" data-f="link" title="Bağlantı">🔗</button><button type="button" data-f="ol" title="Numaralı liste">1.</button><button type="button" data-f="ul" title="Madde işaretli liste">•</button><span class="sep"></span>
             <button type="button" data-f="q" title="Alıntı">❝</button><button type="button" data-f="code" title="Kod">&lt;/&gt;</button><button type="button" data-f="pre" title="Kod bloğu">{ }</button>
           </div>
-          <textarea id="chattext" rows="1" placeholder="Mesaj yaz…" autocomplete="off"></textarea>
+          <div id="chattext" class="ce" contenteditable="true" role="textbox" aria-multiline="true" data-ph="Mesaj yaz…" spellcheck="true"></div>
           <div class="cmp-bot">
             <button type="button" class="cb" id="dosyaekle" title="Dosya paylaş (Drive)">＋</button><button type="button" class="cb" id="aa" title="Biçimlendirme">Aa</button><button type="button" class="cb" id="emojibtn" title="Emoji">☺</button><button type="button" class="cb" id="mentionbtn" title="Birinden bahset">@</button><span class="sep"></span><button type="button" class="cb" id="gorusbtn" title="Görüntülü görüşme başlat">🎥</button>
             <span style="flex:1"></span><span class="muted cmp-ipucu">Enter gönderir · Shift+Enter yeni satır</span><button class="send" aria-label="Gönder" title="Gönder">➤</button>
@@ -552,6 +563,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 </div>
 
-<script>window.JV="20261017234141";</script>
-<script type="module" src="app.js?v=20261017234141"></script>
+<script>window.JV="20261017234611";</script>
+<script type="module" src="app.js?v=20261017234611"></script>
 </body></html>
