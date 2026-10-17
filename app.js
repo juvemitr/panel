@@ -22,7 +22,7 @@ const ODEYEN = ["Mustafa", "Rumeysa", "Fatma Nur", "Ortak kasa"], ORTAK = ["Must
 const TL = n => "₺" + Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
 
-let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], panel = { gorevler: [] }, unsub = [];
+let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, panel = { gorevler: [] }, unsub = [];
 let TAB = (location.hash || "").slice(1) || (() => { try { return localStorage.getItem("juvemi-tab"); } catch (e) { } })() || "ana";
 function flash(m) { $("status").textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => $("status").textContent = "", 2500); }
 
@@ -63,19 +63,20 @@ const APPS = [
   { id: "gorevler", ad: "Görevlerim", renk: "#3F8F5F", ik: "✓", alt: () => { const n = (panel.gorevler || []).filter(t => t.durum !== "bitti").length; return n + " açık görev"; } },
   { id: "takvim", ad: "Takvim", renk: "#E0A83A", ik: "▦", alt: () => { const t = bugun(), n = etk.filter(e => e.tarih >= t).length; return n ? n + " yaklaşan etkinlik" : "Ortak + kişisel"; } },
   { id: "giderler", ad: "Giderler", renk: "#C8463E", ik: "₺", alt: () => TL(giderler.reduce((s, g) => s + (+g.tutar || 0), 0)) },
-  { id: "butce", ad: "Bütçe & Sermaye", renk: "#8A7FB5", ik: "◔", alt: () => "Yakında", yakinda: true }
+  { id: "butce", ad: "Bütçe & Sermaye", renk: "#8A7FB5", ik: "◔", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
 $("homebtn").onclick = () => go("ana");
 function renderTabs() {
   const mod = mods.find(m => m.id === TAB), app = APPS.find(x => x.id === TAB && !x.yakinda);
-  if (!mod && !app && TAB !== "ana" && (mods.length || ["genel","gorevler","takvim","giderler"].includes(TAB) === false)) TAB = "ana";
+  if (!mod && !app && TAB !== "ana" && mods.length) TAB = "ana";
   $("appbar").hidden = TAB === "ana"; $("apptitle").textContent = mod ? mod.ad : (app ? app.ad : "");
   document.querySelectorAll(".pane").forEach(p => p.hidden = !(p.dataset.pane === TAB || (mod && p.dataset.pane === "mod")));
   $("apps").innerHTML = APPS.map(x => `<button type="button" class="app" data-t="${x.id}"${x.yakinda ? " disabled" : ""}><i style="background:${x.renk}">${x.ik}</i><b>${esc(x.ad)}</b><span>${esc(x.alt())}</span></button>`).join("");
   $("apps").querySelectorAll(".app:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
   if (mod) $("modpane").innerHTML = `<section><p class="muted" style="margin:0 0 12px">${esc(mod.aciklama)}</p><div class="mods">${(mod.bolumler || []).map(b => `<div class="mod"><div class="row"><b>${esc(b.ad)}</b><span class="tag ${esc(b.durum)}">${TAG[b.durum] || esc(b.durum)}</span></div>${b.not ? `<div class="muted">${esc(b.not)}</div>` : ""}</div>`).join("")}</div></section>`;
   if (TAB === "takvim") renderCal();
+  if (TAB === "butce") renderButce();
 }
 
 /* ---------- takvim ---------- */
@@ -200,6 +201,57 @@ $("logform").onsubmit = e => {
   addDoc(collection(db, "gunluk"), { metin: v, yazan: MYNAME, ts: Date.now() }).then(() => { $("logtext").value = ""; flash("Eklendi"); }).catch(() => flash("Eklenemedi"));
 };
 
+/* ---------- bütçe & sermaye ---------- */
+let BT = (() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; })();
+const ay = () => BT.y + "-" + String(BT.m + 1).padStart(2, "0");
+function renderButce() {
+  const smTop = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0), gTop = giderler.reduce((t, g) => t + (+g.tutar || 0), 0);
+  const kasaG = giderler.filter(g => g.odeyen === "Ortak kasa").reduce((t, g) => t + (+g.tutar || 0), 0);
+  const ayG = giderler.filter(g => (g.tarih || "").startsWith(ay())).reduce((t, g) => t + (+g.tutar || 0), 0);
+  const plan = butce[ay()] || {}, planTop = Object.values(plan).reduce((t, v) => t + (+v || 0), 0);
+  $("kasa").innerHTML = [["Toplam sermaye", TL(smTop)], ["Kasada kalan", TL(smTop - kasaG)], ["Toplam harcama", TL(gTop)], ["Bu ay bütçe / harcanan", TL(planTop) + " / " + TL(ayG)]]
+    .map(([b, v], i) => `<div class="fact${i === 1 && smTop - kasaG < 0 ? " pend" : ""}"><b>${b}</b><span>${v}</span></div>`).join("");
+  const kisi = {}; ORTAK.forEach(k => kisi[k] = 0); sermaye.forEach(x => kisi[x.kisi] = (kisi[x.kisi] || 0) + (+x.tutar || 0));
+  const cep = {}; giderler.filter(g => ORTAK.includes(g.odeyen)).forEach(g => cep[g.odeyen] = (cep[g.odeyen] || 0) + (+g.tutar || 0));
+  const mx = Math.max(1, ...ORTAK.map(k => kisi[k] + (cep[k] || 0)));
+  $("sm-kisi").innerHTML = ORTAK.map(k => { const t = kisi[k] + (cep[k] || 0); return `<div class="row"><span>${k}</span><div class="bar"><i style="width:${100 * t / mx}%"></i></div><span class="amt">${TL(t)}</span></div>`; }).join("");
+  const tumu = ORTAK.reduce((t, k) => t + kisi[k] + (cep[k] || 0), 0);
+  $("sm-not").textContent = tumu ? "Toplam katkı = sermaye + kendi cebinden ödediği giderler. Paylar: " + ORTAK.map(k => k + " %" + Math.round(100 * (kisi[k] + (cep[k] || 0)) / tumu)).join(" · ") : "Henüz sermaye kaydı yok.";
+  $("sm-table").innerHTML = sermaye.map(x => `<tr data-id="${esc(x.id)}"><td style="white-space:nowrap">${esc(new Date(x.tarih + "T12:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" }))}</td><td>${esc(x.kisi)}</td><td>${esc(x.not || "")}</td><td class="num2">${TL(x.tutar)}</td><td><button class="del" type="button">Sil</button></td></tr>`).join("") || '<tr><td colspan="5" class="muted">Henüz sermaye kaydı yok.</td></tr>';
+  $("sm-table").querySelectorAll(".del").forEach(b => b.onclick = () => {
+    if (!b.classList.contains("sure")) { b.classList.add("sure"); b.textContent = "Tekrar tıkla"; setTimeout(() => { b.classList.remove("sure"); b.textContent = "Sil"; }, 4000); return; }
+    deleteDoc(doc(db, "sermaye", b.closest("tr").dataset.id)).then(() => flash("Silindi")).catch(() => flash("Silinemedi"));
+  });
+  $("bt-title").textContent = AYLAR[BT.m] + " " + BT.y;
+  const ger = {}; giderler.filter(g => (g.tarih || "").startsWith(ay())).forEach(g => ger[g.kategori] = (ger[g.kategori] || 0) + (+g.tutar || 0));
+  const focused = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.k;
+  let pT = 0, gT = 0;
+  $("bt-table").innerHTML = KAT.map(k => { const p = +plan[k] || 0, g = ger[k] || 0; pT += p; gT += g; const pct = p ? Math.min(100, 100 * g / p) : (g ? 100 : 0);
+    return `<tr><td>${k}</td><td class="num2"><input class="bt-in" type="number" min="0" step="1" data-k="${k}" value="${p || ""}" placeholder="0"></td><td class="num2">${TL(g)}</td><td class="num2${g > p && p ? " over" : ""}">${p ? TL(p - g) : "—"}</td><td><div class="bar"><i style="width:${pct}%;${g > p ? "background:var(--bad)" : ""}"></i></div></td></tr>`; }).join("")
+    + `<tr><td><b>Toplam</b></td><td class="num2"><b>${TL(pT)}</b></td><td class="num2"><b>${TL(gT)}</b></td><td class="num2${gT > pT && pT ? " over" : ""}"><b>${pT ? TL(pT - gT) : "—"}</b></td><td></td></tr>`;
+  $("bt-table").querySelectorAll(".bt-in").forEach(inp => inp.onchange = () => {
+    const v = Math.max(0, +inp.value || 0), cur = Object.assign({}, butce[ay()] || {}); cur[inp.dataset.k] = v;
+    setDoc(doc(db, "butce", ay()), cur).then(() => flash("Bütçe kaydedildi")).catch(() => flash("Kaydedilemedi"));
+  });
+  if (focused) { const f = $("bt-table").querySelector(`[data-k="${focused}"]`); if (f) f.focus(); }
+}
+$("bt-prev").onclick = () => { BT.m--; if (BT.m < 0) { BT.m = 11; BT.y--; } renderButce(); };
+$("bt-next").onclick = () => { BT.m++; if (BT.m > 11) { BT.m = 0; BT.y++; } renderButce(); };
+$("sm-kim").innerHTML = ORTAK.map(k => `<option>${k}</option>`).join("");
+$("sm-tarih").value = iso(new Date());
+$("smform").onsubmit = e => {
+  e.preventDefault(); const t = parseFloat(String($("sm-tutar").value).replace(",", ".")); if (!(t > 0)) { flash("Tutarı yaz"); return; }
+  addDoc(collection(db, "sermaye"), { tarih: $("sm-tarih").value, kisi: $("sm-kim").value, tutar: Math.round(t * 100) / 100, not: $("sm-acik").value.trim(), ekleyen: MYNAME, ts: Date.now() })
+    .then(() => { $("sm-tutar").value = ""; $("sm-acik").value = ""; flash("Sermaye kaydedildi"); }).catch(() => flash("Kaydedilemedi"));
+};
+
+/* ---------- otomatik güncelleme ---------- */
+setInterval(async () => {
+  try { const v = (await (await fetch("version.txt?t=" + Date.now(), { cache: "no-store" })).text()).trim();
+    if (v && window.JV && v !== window.JV && !window.JV.startsWith("__")) { const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.value)) location.reload(); }
+  } catch (e) { }
+}, 60000);
+
 /* ---------- ilk kurulum (bir kez, Mustafa girince) ---------- */
 window.juvemiKurulum = async S => {
   if (!ME) throw new Error("önce giriş yap");
@@ -223,6 +275,8 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "moduller"), orderBy("sira")), s => { mods = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); renderGenel(); }));
   unsub.push(onSnapshot(query(collection(db, "giderler"), orderBy("tarih", "desc")), s => { giderler = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderGider(); renderGenel(); renderTabs(); }, () => flash("Giderler okunamadı")));
   unsub.push(onSnapshot(query(collection(db, "etkinlikler"), orderBy("tarih")), s => { etk = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
+  unsub.push(onSnapshot(query(collection(db, "sermaye"), orderBy("tarih", "desc")), s => { sermaye = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
+  unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "gunluk"), orderBy("ts", "desc")), s => { gunluk = s.docs.map(d => d.data()); renderGenel(); }));
   unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && document.activeElement.tagName === "TEXTAREA")) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
 }

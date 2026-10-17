@@ -143,6 +143,9 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--slate);b
 .gate{background:transparent}.gbox{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:var(--shadow-h);max-width:380px}
 .empty{border-radius:16px}
 @media (prefers-reduced-motion:reduce){.app,.ovc{transition:none}}
+.bt-in{width:120px;text-align:right;padding:6px 8px}
+.over{color:var(--bad);font-weight:700}
+#smform label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -199,6 +202,27 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--slate);b
     </section>
   </div>
 
+  <div class="pane" data-pane="butce">
+    <section><h2>Kasa durumu</h2><div class="grid" id="kasa"></div></section>
+    <section><h2>Sermaye</h2>
+      <div class="two">
+        <div class="card"><h2>Kim ne koydu</h2><div class="kv" id="sm-kisi"></div><p class="muted" id="sm-not" style="margin:12px 0 0"></p></div>
+        <div class="card"><h2>Sermaye ekle</h2>
+          <form id="smform" style="display:grid;gap:8px;grid-template-columns:1fr 1fr">
+            <label class="muted">Tarih<input type="date" id="sm-tarih" required></label>
+            <label class="muted">Kim<select id="sm-kim"></select></label>
+            <label class="muted">Tutar (₺)<input type="number" id="sm-tutar" step="0.01" min="0" inputmode="decimal" required></label>
+            <label class="muted">Not<input id="sm-acik" placeholder="ör. ilk katkı" autocomplete="off"></label>
+            <button class="btn" style="grid-column:1/3">Kaydet</button>
+          </form></div>
+      </div>
+      <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Tarih</th><th>Kim</th><th>Not</th><th class="num2">Tutar</th><th></th></tr></thead><tbody id="sm-table"></tbody></table></div>
+    </section>
+    <section><h2>Aylık bütçe</h2>
+      <div class="cal-head"><button type="button" id="bt-prev" aria-label="Önceki ay">‹</button><b id="bt-title"></b><button type="button" id="bt-next" aria-label="Sonraki ay">›</button><span class="muted" style="margin-left:auto">Planlanan tutarları yaz; gerçekleşen, Giderler'den otomatik gelir.</span></div>
+      <div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Kategori</th><th class="num2">Planlanan</th><th class="num2">Gerçekleşen</th><th class="num2">Kalan</th><th style="width:28%"></th></tr></thead><tbody id="bt-table"></tbody></table></div>
+    </section>
+  </div>
   <div class="pane" data-pane="giderler">
     <section><h2>Gider ekle</h2>
       <form class="gform" id="gform">
@@ -224,5 +248,6 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--slate);b
   <div class="pane" data-pane="mod" id="modpane"></div>
 </div>
 
-<script type="module" src="app.js"></script>
+<script>window.JV="20261017175634";</script>
+<script type="module" src="app.js?v=20261017175634"></script>
 </body></html>
