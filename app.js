@@ -453,6 +453,27 @@ const sonOkunan = (k = KANAL) => { try { return +localStorage.getItem(okKey(k)) 
 function benimKanallar() { return kanallar.filter(k => !k.uyeler || !k.uyeler.length || k.uyeler.includes(KADI)); }
 function okundu() { const L = mesajlar.filter(m => kanalOf(m) === KANAL), t = L.length ? L[L.length - 1].ts : 0; try { localStorage.setItem(okKey(KANAL), t); } catch (e) { } }
 function okunmamis(k) { const ks = k ? [k] : benimKanallar().map(x => x.id); return mesajlar.filter(m => ks.includes(kanalOf(m)) && m.ts > sonOkunan(kanalOf(m)) && m.kadi !== KADI).length; }
+function md(t) {
+  const kod = []; let s = esc(t || "");
+  s = s.replace(/```([\s\S]*?)```/g, (_, c) => { kod.push("<pre>" + c.replace(/^\n/, "") + "</pre>"); return "\u0000" + (kod.length - 1) + "\u0000"; });
+  s = s.replace(/`([^`\n]+)`/g, (_, c) => { kod.push("<code>" + c + "</code>"); return "\u0000" + (kod.length - 1) + "\u0000"; });
+  s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, txt, u) => { kod.push(`<a href="${u}" target="_blank" rel="noopener">${txt}</a>`); return "\u0000" + (kod.length - 1) + "\u0000"; });
+  s = s.replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0, 57) + "…" : u}</a>`);
+  s = s.replace(/\[([^\]\n]+)\]\((<a href="([^"]+)"[^>]*>[^<]*<\/a>)\)/g, (_, txt, a, u) => `<a href="${u}" target="_blank" rel="noopener">${txt}</a>`);
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^\w*])\*([^*\n]+)\*(?!\w)/g, "$1<b>$2</b>")
+       .replace(/__([^_\n]+)__/g, "<u>$1</u>").replace(/(^|[^\w_])_([^_\n]+)_(?!\w)/g, "$1<i>$2</i>").replace(/~([^~\n]+)~/g, "<s>$1</s>")
+       .replace(/(^|\s)@(Mustafa|Fatma Nur|Rumeysa|herkes)\b/g, '$1<span class="ment">@$2</span>');
+  const L = s.split("\n"), out = []; let li = null;
+  for (const l of L) { let m;
+    if ((m = l.match(/^\s*[-•]\s+(.*)/))) { if (li !== "ul") { if (li) out.push(`</${li}>`); out.push("<ul>"); li = "ul"; } out.push("<li>" + m[1] + "</li>"); continue; }
+    if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { if (li !== "ol") { if (li) out.push(`</${li}>`); out.push("<ol>"); li = "ol"; } out.push("<li>" + m[1] + "</li>"); continue; }
+    if (li) { out.push(`</${li}>`); li = null; }
+    if ((m = l.match(/^&gt;\s?(.*)/))) { out.push("<blockquote>" + m[1] + "</blockquote>"); continue; }
+    out.push(l + "<br>");
+  }
+  if (li) out.push(`</${li}>`);
+  return out.join("").replace(/<br>$/, "").replace(/\u0000(\d+)\u0000/g, (_, i) => kod[+i]).replace(/<\/pre><br>/g, "</pre>");
+}
 function linkle(t) { return esc(t).replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0, 57) + "…" : u}</a>`); }
 function dosyaTur(u, ad) { const s = (ad || u).toLowerCase(); if (/docs\.google\.com\/document/.test(u)) return "DOC"; if (/spreadsheets/.test(u)) return "XLS"; if (/presentation/.test(u)) return "PPT"; if (/folders/.test(u)) return "KLS"; const m = s.match(/\.([a-z0-9]{2,4})(\?|$)/); return m ? m[1].toUpperCase() : "DOSYA"; }
 let chatN = -1, chatK = "";
@@ -470,8 +491,8 @@ function renderChat() {
   let son = "";
   el.innerHTML = L.map(m => { const d = new Date(m.ts), g = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" }), kisi = ekip.find(x => x.id === m.kadi) || { ad: m.ad || m.kadi };
     const sep = g !== son ? `<div class="daysep">${esc(g)}</div>` : ""; son = g;
-    const govde = m.tur === "dosya" ? `${m.metin ? `<p>${linkle(m.metin)}</p>` : ""}<a class="file" href="${esc(lnk(m.url) || "#")}" target="_blank" rel="noopener"><i>${esc(dosyaTur(m.url, m.dosyaAd))}</i><span style="min-width:0"><b>${esc(m.dosyaAd || "Drive dosyası")}</b><span>Google Drive'da aç</span></span></a>` : `<p>${linkle(m.metin)}</p>`;
-    return sep + `<div class="msg${m.kadi === KADI ? " me" : ""}"><span class="ou">${kisi.foto ? `<img src="${esc(kisi.foto)}" alt="">` : esc(ini(kisi.ad))}</span><div class="bub">${m.kadi === KADI ? "" : `<b>${esc((kisi.ad || "").split(" ")[0])}</b>`}${govde}<time>${d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time></div></div>`; }).join("");
+    const govde = m.tur === "dosya" ? `${m.metin ? `<div class="md">${md(m.metin)}</div>` : ""}<a class="file" href="${esc(lnk(m.url) || "#")}" target="_blank" rel="noopener"><i>${esc(dosyaTur(m.url, m.dosyaAd))}</i><span style="min-width:0"><b>${esc(m.dosyaAd || "Drive dosyası")}</b><span>Google Drive'da aç</span></span></a>` : `<div class="md">${md(m.metin)}</div>`;
+    return sep + `<div class="msg${m.kadi === KADI ? " me" : ""}"><span class="ou">${kisi.foto ? `<img src="${esc(kisi.foto)}" alt="">` : esc(ini(kisi.ad))}</span><div class="bub">${m.kadi === KADI ? "" : `<b class="nm">${esc((kisi.ad || "").split(" ")[0])}</b>`}${govde}<time>${d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time></div></div>`; }).join("");
   if (alt || L.length !== chatN && L[L.length - 1].kadi === KADI) el.scrollTop = el.scrollHeight; chatN = L.length; chatK = KANAL;
 }
 function gonder() { const v = $("chattext").value.trim(); if (!v) return; $("chattext").value = ""; $("chattext").style.height = "";
@@ -479,6 +500,30 @@ function gonder() { const v = $("chattext").value.trim(); if (!v) return; $("cha
 $("chatform").onsubmit = e => { e.preventDefault(); gonder(); };
 $("chattext").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); gonder(); } });
 $("chattext").addEventListener("input", e => { const t = e.target; t.style.height = "auto"; t.style.height = Math.min(140, t.scrollHeight) + "px"; });
+const TA = () => $("chattext");
+function sar(on, son = on, ph = "metin") { const t = TA(), a0 = t.selectionStart, b0 = t.selectionEnd, sec = t.value.slice(a0, b0) || ph;
+  t.setRangeText(on + sec + son, a0, b0, "end"); t.focus(); t.selectionStart = a0 + on.length; t.selectionEnd = a0 + on.length + sec.length; t.dispatchEvent(new Event("input")); }
+function satirBasi(fn) { const t = TA(), v = t.value, a0 = v.lastIndexOf("\n", t.selectionStart - 1) + 1, b0 = t.selectionEnd, parca = v.slice(a0, b0).split("\n");
+  t.setRangeText(parca.map(fn).join("\n"), a0, b0, "end"); t.focus(); t.dispatchEvent(new Event("input")); }
+const FMT = { b: () => sar("*"), i: () => sar("_"), u: () => sar("__"), s: () => sar("~"), code: () => sar("`", "`", "kod"), pre: () => sar("```\n", "\n```", "kod"),
+  link: () => sar("[", "](https://)", "bağlantı metni"),
+  ul: () => satirBasi(l => "- " + l), ol: () => satirBasi((l, i) => (i + 1) + ". " + l), q: () => satirBasi(l => "> " + l) };
+$("cmptools").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => FMT[b.dataset.f](); });
+TA().addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && !e.shiftKey) { const k = { b: "b", i: "i", u: "u" }[e.key.toLowerCase()]; if (k) { e.preventDefault(); FMT[k](); } } });
+let ARAC = (() => { try { return localStorage.getItem("juvemi-arac") !== "0"; } catch (e) { return true; } })();
+function aracUygula() { $("cmptools").classList.toggle("off", !ARAC); $("aa").classList.toggle("on", ARAC); } aracUygula();
+$("aa").onclick = () => { ARAC = !ARAC; try { localStorage.setItem("juvemi-arac", ARAC ? "1" : "0"); } catch (e) { } aracUygula(); };
+const EMO = "😀 😂 🥰 😊 😉 😍 🤩 😎 🤔 😅 😴 😢 😮 🙏 👍 👎 👏 🙌 💪 👀 🎉 🎊 🔥 ✨ ⭐ 💡 ✅ ❌ ⚠️ 📌 📎 📝 📅 ⏰ 💰 🛒 📦 🎁 🧸 🎨 ✏️ 📚 🧩 🌈 🌸 🍀 ❤️ 💛 💙 🚀 🎯 📣 💬 ☕".split(" ");
+$("emojipop").innerHTML = EMO.map(e => `<button type="button">${e}</button>`).join("");
+$("emojipop").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { TA().setRangeText(b.textContent, TA().selectionStart, TA().selectionEnd, "end"); TA().focus(); $("emojipop").hidden = true; }; });
+function mentionAc() { $("mentionpop").innerHTML = [["herkes", "herkes"]].concat(ORTAKLAR).map(([k, ad]) => { const m = ekip.find(x => x.id === k); return `<button type="button" data-ad="${esc(ad === "herkes" ? "herkes" : ad)}"><span class="ou">${m && m.foto ? `<img src="${esc(m.foto)}" alt="">` : esc(ini(ad))}</span>@${esc(ad)}</button>`; }).join("");
+  $("mentionpop").querySelectorAll("button").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { const t = TA(), p = t.selectionStart, onceki = t.value.slice(0, p).endsWith("@") ? 1 : 0; t.setRangeText("@" + b.dataset.ad + " ", p - onceki, t.selectionEnd, "end"); t.focus(); $("mentionpop").hidden = true; }; });
+  $("mentionpop").hidden = false; $("emojipop").hidden = true; }
+$("emojibtn").onclick = () => { $("emojipop").hidden = !$("emojipop").hidden; $("mentionpop").hidden = true; };
+$("mentionbtn").onclick = () => $("mentionpop").hidden ? mentionAc() : ($("mentionpop").hidden = true);
+TA().addEventListener("input", e => { const t = e.target, v = t.value.slice(0, t.selectionStart); if (/(^|\s)@$/.test(v)) mentionAc(); });
+document.addEventListener("click", e => { if (!e.target.closest("#emojipop,#emojibtn,#mentionpop,#mentionbtn")) { $("emojipop").hidden = true; $("mentionpop").hidden = true; } });
+$("gorusbtn").onclick = () => { addDoc(collection(db, "mesajlar"), { metin: "🎥 Görüntülü görüşme başlattı — katılmak için Görüntülü Görüşme sayfasına geç.", kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() }).catch(() => { }); go("toplanti"); setTimeout(() => $("meetstart").click(), 300); };
 $("dosyaekle").onclick = () => { const K = kanallar.find(k => k.id === KANAL); if (K && lnk(K.klasor)) window.open(K.klasor, "_blank", "noopener"); $("dosyabar").hidden = false; $("dosyalink").focus(); };
 $("dosyakapat").onclick = () => { $("dosyabar").hidden = true; };
 $("dosyagonder").onclick = () => { const u = $("dosyalink").value.trim(); if (!lnk(u)) { flash("Geçerli bir Drive bağlantısı yapıştır"); return; }

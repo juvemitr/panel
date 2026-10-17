@@ -261,7 +261,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .msg .ou{margin:0;width:30px;height:30px;font-size:11px}.msg .ou::after{display:none}
 .bub{background:var(--bg);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:8px 12px;min-width:0}
 .msg.me .bub{background:color-mix(in srgb,var(--slate) 16%,var(--surface));border-color:transparent;border-radius:16px 16px 4px 16px}
-.bub b{font-size:12px;display:block;color:var(--slate)}.bub p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14.5px}
+.bub .nm{font-size:12px;display:block;color:var(--slate);font-weight:700}.bub p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14.5px}
 .bub time{display:block;font-size:10.5px;color:var(--muted);margin-top:3px;text-align:right}
 .daysep{align-self:center;font:700 11px var(--body);color:var(--muted);background:var(--bg);border-radius:99px;padding:3px 10px}
 .chat-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:var(--surface)}
@@ -346,6 +346,32 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .file b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.file span{font-size:11px;color:var(--muted)}
 .bub a{color:var(--slate);font-weight:600;overflow-wrap:anywhere}
 @media (max-width:760px){.slack{grid-template-columns:1fr;height:calc(100dvh - 200px)}.kanallar{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px}.kh{display:none}.ki{flex:none;width:auto}.k-form{position:absolute;z-index:5;left:16px;right:16px}.k-drive{display:none}}
+
+/* ---------- composer ---------- */
+.composer{position:relative;margin:10px 12px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);display:flex;flex-direction:column}
+.composer:focus-within{border-color:var(--slate);box-shadow:0 0 0 3px color-mix(in srgb,var(--slate) 18%,transparent)}
+.cmp-tools,.cmp-bot{display:flex;align-items:center;gap:2px;padding:6px 8px}
+.cmp-tools{border-bottom:1px solid var(--line)}.cmp-tools.off{display:none}
+.cmp-tools button,.cb{min-width:30px;height:30px;border:0;background:none;border-radius:7px;color:var(--muted);font:600 14px var(--body);cursor:pointer;padding:0 6px}
+.cmp-tools button:hover,.cb:hover{background:color-mix(in srgb,var(--slate) 14%,transparent);color:var(--ink)}
+.cb.on{color:var(--ink);background:color-mix(in srgb,var(--slate) 14%,transparent)}
+.sep{width:1px;height:18px;background:var(--line);margin:0 6px}
+.composer textarea{border:0!important;box-shadow:none!important;background:transparent;resize:none;min-height:44px;max-height:180px;padding:10px 12px;font-size:14.5px}
+.send{width:34px;height:30px;border:0;border-radius:8px;background:var(--mustard);color:var(--onm);font-size:14px;cursor:pointer}
+.cmp-ipucu{font-size:11px;margin-right:8px}
+.pop{position:absolute;bottom:calc(100% + 6px);left:8px;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-h);padding:8px}
+#emojipop{display:grid;grid-template-columns:repeat(10,32px);gap:2px;max-width:calc(100vw - 48px)}
+#emojipop:not([hidden]){display:grid}
+#emojipop button{width:32px;height:32px;border:0;background:none;border-radius:6px;font-size:19px;cursor:pointer}#emojipop button:hover{background:var(--bg)}
+#mentionpop button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:6px 10px;border-radius:8px;font:600 14px var(--body);color:var(--ink);cursor:pointer}#mentionpop button:hover{background:var(--bg)}
+#mentionpop .ou{width:24px;height:24px;font-size:9px;margin:0}#mentionpop .ou::after{display:none}
+.bub code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:5px;padding:1px 5px}
+.bub pre{margin:4px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:8px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.bub blockquote{margin:4px 0;padding-left:10px;border-left:3px solid var(--line);color:var(--muted)}
+.bub ul,.bub ol{margin:4px 0;padding-left:20px}
+.ment{background:color-mix(in srgb,var(--mustard) 22%,transparent);color:var(--ink);border-radius:5px;padding:0 3px;font-weight:700}
+.bub .md{white-space:normal}.bub .md p{margin:0}
+@media (max-width:600px){.cmp-ipucu{display:none}.cmp-tools{overflow-x:auto}}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -418,7 +444,19 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="k-top"><div style="min-width:0"><b id="k-ad"># genel</b><div class="muted" id="k-konu"></div></div><div class="k-uyeler" id="k-uyeler"></div><a class="btn dark k-drive" id="k-drive" target="_blank" rel="noopener">Kanal dosyaları ↗</a></div>
         <div class="chat-list" id="chatlist"><div class="empty">Mesajlar yükleniyor…</div></div>
         <div class="dosya-bar" id="dosyabar" hidden><span class="muted">1) Kanal klasörü yeni sekmede açıldı, dosyanı oraya sürükle. 2) Dosyaya sağ tık → Bağlantıyı kopyala → buraya yapıştır:</span><div style="display:flex;gap:6px"><input id="dosyalink" type="url" placeholder="https://drive.google.com/file/d/…" style="flex:1"><input id="dosyaad" placeholder="Dosya adı (isteğe bağlı)" style="flex:.6"><button type="button" class="btn" id="dosyagonder">Paylaş</button><button type="button" class="btn dark" id="dosyakapat">✕</button></div></div>
-        <form class="chat-form" id="chatform"><button type="button" class="kbtn" id="dosyaekle" title="Dosya paylaş (Drive)">📎</button><textarea id="chattext" rows="1" placeholder="Mesaj yaz… (Enter gönderir, Shift+Enter yeni satır)" autocomplete="off"></textarea><button class="btn" aria-label="Gönder">Gönder</button></form>
+        <form class="composer" id="chatform">
+          <div class="cmp-tools" id="cmptools">
+            <button type="button" data-f="b" title="Kalın (Ctrl+B)"><b>B</b></button><button type="button" data-f="i" title="İtalik (Ctrl+I)"><i>I</i></button><button type="button" data-f="u" title="Altı çizili (Ctrl+U)"><u>U</u></button><button type="button" data-f="s" title="Üstü çizili"><s>S</s></button><span class="sep"></span>
+            <button type="button" data-f="link" title="Bağlantı">🔗</button><button type="button" data-f="ol" title="Numaralı liste">1.</button><button type="button" data-f="ul" title="Madde işaretli liste">•</button><span class="sep"></span>
+            <button type="button" data-f="q" title="Alıntı">❝</button><button type="button" data-f="code" title="Kod">&lt;/&gt;</button><button type="button" data-f="pre" title="Kod bloğu">{ }</button>
+          </div>
+          <textarea id="chattext" rows="1" placeholder="Mesaj yaz…" autocomplete="off"></textarea>
+          <div class="cmp-bot">
+            <button type="button" class="cb" id="dosyaekle" title="Dosya paylaş (Drive)">＋</button><button type="button" class="cb" id="aa" title="Biçimlendirme">Aa</button><button type="button" class="cb" id="emojibtn" title="Emoji">☺</button><button type="button" class="cb" id="mentionbtn" title="Birinden bahset">@</button><span class="sep"></span><button type="button" class="cb" id="gorusbtn" title="Görüntülü görüşme başlat">🎥</button>
+            <span style="flex:1"></span><span class="muted cmp-ipucu">Enter gönderir · Shift+Enter yeni satır</span><button class="send" aria-label="Gönder" title="Gönder">➤</button>
+          </div>
+          <div class="pop" id="emojipop" hidden></div><div class="pop" id="mentionpop" hidden></div>
+        </form>
       </div>
     </section>
   </div>
@@ -514,6 +552,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 </div>
 
-<script>window.JV="20261017233700";</script>
-<script type="module" src="app.js?v=20261017233700"></script>
+<script>window.JV="20261017234141";</script>
+<script type="module" src="app.js?v=20261017234141"></script>
 </body></html>
