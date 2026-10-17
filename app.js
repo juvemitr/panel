@@ -22,7 +22,7 @@ const ODEYEN = ["Mustafa", "Rumeysa", "Fatma Nur", "Ortak kasa"], ORTAK = ["Must
 const TL = n => "₺" + Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
 
-let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, panel = { gorevler: [] }, unsub = [];
+let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", panel = { gorevler: [] }, unsub = [];
 let TAB = (location.hash || "").slice(1) || (() => { try { return localStorage.getItem("juvemi-tab"); } catch (e) { } })() || "ana";
 function flash(m) { $("status").textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => $("status").textContent = "", 2500); }
 
@@ -36,7 +36,7 @@ $("loginform").onsubmit = async e => {
   catch (err) { $("l-err").textContent = "Kullanıcı adı ya da şifre yanlış."; }
   $("l-btn").disabled = false;
 };
-$("logout").onclick = () => signOut(auth);
+$("logout").onclick = () => { kalp(false); KADI = ""; signOut(auth); };
 $("pwopen").onclick = () => { const f = $("pwform"); f.hidden = !f.hidden; $("pw-msg").textContent = ""; if (!f.hidden) $("pw-old").focus(); };
 $("pwform").onsubmit = async e => {
   e.preventDefault(); const m = $("pw-msg"), o = $("pw-old").value, n = $("pw-new").value;
@@ -114,6 +114,7 @@ function renderTabs() {
   if (TAB === "takvim") renderCal();
   if (TAB === "butce") renderButce();
   if (TAB === "ekip") renderEkip();
+  renderOnline();
 }
 
 /* ---------- takvim ---------- */
@@ -308,6 +309,18 @@ function renderEkip() {
 function kucult(file, S) { return new Promise((res, rej) => { const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); c.width = c.height = S; const k = Math.min(img.width, img.height), sx = (img.width - k) / 2, sy = (img.height - k) / 2; c.getContext("2d").drawImage(img, sx, sy, k, k, 0, 0, S, S); URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg", .82)); }; img.onerror = rej; img.src = URL.createObjectURL(file); }); }
 window.juvemiEkipKur = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(x => b.set(doc(db, "ekip", x.id), x.data, { merge: true })); await b.commit(); return "tamam"; };
 
+/* ---------- çevrimiçi ---------- */
+function renderOnline() {
+  const el = $("online"); if (!el || !ekip.length) return; const now = Date.now();
+  el.innerHTML = ekip.map(m => { const d = durum[m.id], on = d && d.aktif && now - (d.son || 0) < 150000;
+    const ne = on ? "çevrimiçi" : (d && d.son ? "son görülme " + new Date(d.son).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "çevrimdışı");
+    return `<span class="ou${on ? " on" : ""}" title="${esc(m.ad)} · ${ne}">${m.foto ? `<img src="${esc(m.foto)}" alt="">` : esc(ini(m.ad))}</span>`; }).join("");
+}
+function kalp(aktif) { if (!KADI) return; setDoc(doc(db, "durum", KADI), { son: Date.now(), aktif }).catch(() => { }); }
+setInterval(() => { if (KADI && document.visibilityState === "visible") kalp(true); renderOnline(); }, 60000);
+document.addEventListener("visibilitychange", () => kalp(document.visibilityState === "visible"));
+addEventListener("pagehide", () => kalp(false));
+
 /* ---------- otomatik güncelleme ---------- */
 setInterval(async () => {
   try { const v = (await (await fetch("version.txt?t=" + Date.now(), { cache: "no-store" })).text()).trim();
@@ -333,12 +346,14 @@ window.juvemiKurulum = async S => {
 };
 
 async function start(kadi) {
+  KADI = kadi; kalp(true);
   renderTabs(); renderGenel(); renderTasks(); renderGider();
   unsub.push(onSnapshot(doc(db, "ortak", "ozet"), s => { ozet = s.data() || null; renderGenel(); }));
   unsub.push(onSnapshot(query(collection(db, "moduller"), orderBy("sira")), s => { mods = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); renderGenel(); }));
   unsub.push(onSnapshot(query(collection(db, "giderler"), orderBy("tarih", "desc")), s => { giderler = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderGider(); renderGenel(); renderTabs(); }, () => flash("Giderler okunamadı")));
   unsub.push(onSnapshot(query(collection(db, "etkinlikler"), orderBy("tarih")), s => { etk = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "sermaye"), orderBy("tarih", "desc")), s => { sermaye = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
+  unsub.push(onSnapshot(collection(db, "durum"), s => { durum = {}; s.docs.forEach(d => durum[d.id] = d.data()); renderOnline(); }));
   unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "gunluk"), orderBy("ts", "desc")), s => { gunluk = s.docs.map(d => d.data()); renderGenel(); }));

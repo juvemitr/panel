@@ -229,6 +229,17 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 .m-edit:hover{color:var(--ink)}
 .m-form{display:flex;flex-direction:column;gap:8px}.m-form textarea{min-height:120px}
 @media (hover:none){.avatar label{opacity:1}}
+
+/* ---------- çevrimiçi ---------- */
+.online{display:flex;align-items:center}
+.ou{position:relative;width:34px;height:34px;border-radius:50%;margin-left:-8px;border:2px solid var(--bg);background:linear-gradient(135deg,var(--slate),var(--mustard));display:grid;place-items:center;color:#fff;font:800 12px var(--body);flex:none}
+.ou:first-child{margin-left:0}
+.ou img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.ou::after{content:"";position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:#E5484D;border:2px solid var(--bg)}
+.ou.on::after{background:#2FB36B}
+.ou:not(.on) img{filter:grayscale(.6);opacity:.75}
+.who .status:empty{display:none}
+@media (max-width:760px){.who>div{font-size:0;padding:4px}.who>div button{font-size:0}.who>div b{font-size:13px}#pwopen{display:none}}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -248,7 +259,8 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 <div class="wrap">
   <header>
     <h1 class="pagetitle" id="apptitle">Uygulamalar</h1>
-    <div class="who"><div><b id="whoname"></b> · <button type="button" id="pwopen">Şifremi değiştir</button> · <button type="button" id="logout">Çıkış</button></div><span class="status" id="status"></span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-width:0"><div class="online" id="online" aria-label="Ekip durumu"></div>
+    <div class="who"><div><b id="whoname"></b> · <button type="button" id="pwopen">Şifremi değiştir</button> · <button type="button" id="logout">Çıkış</button></div><span class="status" id="status"></span></div></div>
   </header>
   <form class="card" id="pwform" hidden style="display:grid;gap:8px;grid-template-columns:1fr 1fr 1fr auto;align-items:end">
     <label class="muted">Mevcut şifre<input type="password" id="pw-old" autocomplete="current-password" required></label>
@@ -340,6 +352,6 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 </div>
 </div>
 
-<script>window.JV="20261017181121";</script>
-<script type="module" src="app.js?v=20261017181121"></script>
+<script>window.JV="20261017181329";</script>
+<script type="module" src="app.js?v=20261017181329"></script>
 </body></html>
