@@ -303,6 +303,24 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .tp-ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .tp-act{display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:600px){.tp-g{grid-template-columns:1fr}}
+
+/* ---------- yükleme bandı ---------- */
+.upl{display:flex;align-items:center;gap:16px;flex-wrap:wrap;flex-direction:row;background:linear-gradient(120deg,color-mix(in srgb,var(--slate) 16%,var(--surface)),color-mix(in srgb,var(--mustard) 16%,var(--surface)));border:1px solid var(--line);border-radius:20px;padding:18px 20px;box-shadow:var(--shadow)}
+.upl:empty{display:none}
+.upl .ic{width:48px;height:48px;border-radius:14px;background:var(--surface);display:grid;place-items:center;color:var(--slate);flex:none}
+.upl .tx{flex:1;min-width:200px}.upl .tx b{font-size:16px;display:block}.upl .tx span{color:var(--muted);font-size:13px}
+/* ---------- yol haritası ---------- */
+.yh{display:flex;flex-direction:column;gap:22px}
+.faz{display:flex;flex-direction:column;gap:10px}
+.faz-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.faz-h b{font:800 18px var(--body)}.faz-h span{color:var(--muted);font-size:13px}
+.faz-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;max-width:420px}.faz-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--slate),var(--mustard))}
+.yh-list{display:flex;flex-direction:column;gap:8px;border-left:2px solid var(--line);margin-left:7px;padding-left:18px}
+.yi{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;cursor:pointer}
+.yi::before{content:"";position:absolute;left:-26px;top:16px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--line)}
+.yi.devam::before{border-color:var(--mustard);background:var(--mustard)}.yi.bitti::before{border-color:var(--ok);background:var(--ok)}
+.yi.bitti b{text-decoration:line-through;opacity:.6}
+.yi .meta{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.yi p{grid-column:1/-1;margin:0;font-size:13.5px;color:var(--muted)}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -333,6 +351,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="muted" id="pw-msg" style="grid-column:1/-1"></div>
   </form>
   <div class="pane" data-pane="ana">
+    <section class="upl" id="upl"></section>
     <section><h2>Uygulamalar</h2><div class="apps" id="apps"></div></section>
     <section><h2>Şirket alanları</h2><div class="grid" id="ov"></div></section>
   </div>
@@ -381,7 +400,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   <div class="pane" data-pane="toplantilar">
     <section class="tp-top">
       <div><b>Haftalık üretimler klasörü</b><div class="muted" id="tp-drivedurum">Google Drive'daki ortak klasör</div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" id="tp-drive" target="_blank" rel="noopener" style="text-decoration:none">Drive klasörünü aç</a><button type="button" class="btn dark" id="tp-drivedeg">Linki değiştir</button><button type="button" class="btn dark" id="tp-yeni">+ Yeni toplantı kaydı</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" id="tp-yukle" target="_blank" rel="noopener" style="text-decoration:none">Haftalık üretimimi yükle</a><a class="btn dark" id="tp-drive" target="_blank" rel="noopener" style="text-decoration:none">Tüm klasör</a><button type="button" class="btn dark" id="tp-drivedeg">Linki değiştir</button><button type="button" class="btn dark" id="tp-yeni">+ Yeni toplantı kaydı</button></div>
     </section>
     <form class="card tp-form" id="tp-form" hidden>
       <div class="tp-g"><label>Tarih<input type="date" id="tf-tarih" required></label><label class="w2">Başlık<input id="tf-baslik" placeholder="ör. 1. Hafta değerlendirmesi" required></label></div>
@@ -393,6 +412,15 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div style="display:flex;gap:8px"><button class="btn">Kaydet</button><button type="button" class="btn dark" id="tf-iptal">Vazgeç</button></div>
     </form>
     <section id="tp-list"><div class="empty">Toplantı kayıtları yükleniyor…</div></section>
+  </div>
+  <div class="pane" data-pane="yol">
+    <section class="tp-top"><div><b>Yol haritası</b><div class="muted">Fazlar ve hedefler. Herkes düzenleyebilir; durum etiketine tıklayınca ilerler.</div></div><button type="button" class="btn dark" id="yh-yeni">+ Hedef ekle</button></section>
+    <form class="card tp-form" id="yh-form" hidden>
+      <div class="tp-g" style="grid-template-columns:1fr 1fr 1fr 1fr"><label>Faz<select id="yf-faz"></select></label><label>Sorumlu<select id="yf-kim"><option>Hepsi</option><option>Mustafa</option><option>Fatma Nur</option><option>Rumeysa</option></select></label><label>Hedef tarih<input type="date" id="yf-tarih"></label><label>Durum<select id="yf-durum"><option value="acik">Planlandı</option><option value="devam">Sürüyor</option><option value="bitti">Tamamlandı</option></select></label></div>
+      <label>Hedef<input id="yf-baslik" required></label><label>Açıklama<textarea id="yf-acik" rows="2"></textarea></label>
+      <div style="display:flex;gap:8px"><button class="btn">Kaydet</button><button type="button" class="btn dark" id="yf-iptal">Vazgeç</button><button type="button" class="del" id="yf-sil" hidden style="margin-left:auto">Sil</button></div>
+    </form>
+    <section class="yh" id="yh"><div class="empty">Yol haritası yükleniyor…</div></section>
   </div>
   <div class="pane" data-pane="ekip">
     <section><div class="team" id="team"><div class="empty">Ekip bilgileri yükleniyor…</div></div></section>
@@ -444,6 +472,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 </div>
 
-<script>window.JV="20261017231212";</script>
-<script type="module" src="app.js?v=20261017231212"></script>
+<script>window.JV="20261017231909";</script>
+<script type="module" src="app.js?v=20261017231909"></script>
 </body></html>

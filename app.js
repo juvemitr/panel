@@ -22,7 +22,7 @@ const ODEYEN = ["Mustafa", "Rumeysa", "Fatma Nur", "Ortak kasa"], ORTAK = ["Must
 const TL = n => "₺" + Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
 
-let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", mesajlar = [], toplantilar = [], TPACIK = null, TPEDIT = null, panel = { gorevler: [] }, unsub = [];
+let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", mesajlar = [], toplantilar = [], haftalar = [], yol = [], YHEDIT = null, TPACIK = null, TPEDIT = null, panel = { gorevler: [] }, unsub = [];
 let TAB = (location.hash || "").slice(1) || (() => { try { return localStorage.getItem("juvemi-tab"); } catch (e) { } })() || "ana";
 function flash(m) { $("status").textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => $("status").textContent = "", 2500); }
 
@@ -76,6 +76,8 @@ const IC = {
   toplanti: '<rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/>',
   toplantilar: '<path d="M8 3h8l4 4v14H4V3z"/><path d="M16 3v4h4M8 11h8M8 15h8M8 19h5"/>',
   chev: '<path d="m6 9 6 6 6-6"/>',
+  yol: '<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/>',
+  upload: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
   menu: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/>',
@@ -90,6 +92,7 @@ const APPS = [
   { id: "takvim", ad: "Takvim", renk: "#C98A1B", ik: "takvim", alt: () => { const t = bugun(), n = etk.filter(e => e.tarih >= t).length; return n ? n + " yaklaşan etkinlik" : "Ortak + kişisel"; } },
   { id: "giderler", ad: "Giderler", renk: "#C8463E", ik: "gider", alt: () => TL(giderler.reduce((s, g) => s + (+g.tutar || 0), 0)) },
   { id: "sohbet", ad: "Sohbet", renk: "#3E7CC9", ik: "sohbet", alt: () => { const n = okunmamis(); return n ? n + " yeni mesaj" : "Ekip içi mesajlaşma"; } },
+  { id: "yol", ad: "Yol Haritası", renk: "#2E8B6E", ik: "yol", alt: () => { const n = yol.length, b = yol.filter(x => x.durum === "bitti").length; return n ? b + " / " + n + " hedef tamam" : "Fazlar ve hedefler"; } },
   { id: "toplantilar", ad: "Toplantılar", renk: "#4F6BB8", ik: "toplantilar", alt: () => toplantilar.length ? toplantilar.length + " kayıt · son " + new Date(toplantilar[0].tarih + "T12:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "Haftalık değerlendirmeler" },
   { id: "toplanti", ad: "Görüntülü Görüşme", renk: "#D06A2C", ik: "toplanti", alt: () => "Jitsi ekip odası" },
   { id: "ekip", ad: "Ekip", renk: "#2F8C8C", ik: "ekipapp", alt: () => ekip.length ? ekip.length + " kurucu ortak" : "Kurucu ortaklar" },
@@ -123,6 +126,8 @@ function renderTabs() {
   if (TAB === "butce") renderButce();
   if (TAB === "ekip") renderEkip();
   if (TAB === "toplantilar") renderTp();
+  if (TAB === "yol") renderYol();
+  renderUpl();
   if (TAB === "sohbet") { renderChat(); okundu(); }
   if (TAB !== "toplanti" && $("meetframe").querySelector("iframe")) meetEnd();
   renderOnline();
@@ -320,6 +325,39 @@ function renderEkip() {
 function kucult(file, S) { return new Promise((res, rej) => { const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); c.width = c.height = S; const k = Math.min(img.width, img.height), sx = (img.width - k) / 2, sy = (img.height - k) / 2; c.getContext("2d").drawImage(img, sx, sy, k, k, 0, 0, S, S); URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg", .82)); }; img.onerror = rej; img.src = URL.createObjectURL(file); }); }
 window.juvemiEkipKur = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(x => b.set(doc(db, "ekip", x.id), x.data, { merge: true })); await b.commit(); return "tamam"; };
 
+/* ---------- haftalık yükleme ---------- */
+function buHafta() { const t = bugun(); return haftalar.find(w => w.baslangic <= t && t <= w.bitis) || haftalar[haftalar.length - 1]; }
+function renderUpl() {
+  const w = buHafta(), url = w && w.kisi && lnk(w.kisi[KADI]);
+  const html = w && url ? `<div class="ic">${svg("upload", 24)}</div><div class="tx"><b>Haftalık üretimini yükle · ${esc(w.ad)}</b><span>Dosyalarını Drive'daki kendi klasörüne bırak. Hafta sonunda Claude inceleyip değerlendirmeyi Toplantılar'a ekler.</span></div><a class="btn" href="${esc(url)}" target="_blank" rel="noopener" style="text-decoration:none">Klasörümü aç ↗</a>` : "";
+  if ($("upl").dataset.h !== html) { $("upl").innerHTML = html; $("upl").dataset.h = html; }
+  const y = $("tp-yukle"); if (y) { y.href = url || "#"; y.style.display = url ? "" : "none"; }
+}
+
+/* ---------- yol haritası ---------- */
+const FAZLAR = [["f1", "Faz 1 · Dijital başlangıç", "Ekim 2026 – Ocak 2027"], ["f2", "Faz 2 · Aylık abonelik kutusu", "Şubat – Haziran 2027"], ["f3", "Faz 3 · Büyüme", "Temmuz 2027 ve sonrası"]];
+const YDL = { acik: "Planlandı", devam: "Sürüyor", bitti: "Tamamlandı" };
+$("yf-faz").innerHTML = FAZLAR.map(f => `<option value="${f[0]}">${f[1]}</option>`).join("");
+function renderYol() {
+  if ($("yh-form").contains(document.activeElement)) return;
+  const el = $("yh"); if (!yol.length) { el.innerHTML = '<div class="empty">Henüz hedef yok.</div>'; return; }
+  el.innerHTML = FAZLAR.map(([id, ad, ar]) => { const L = yol.filter(x => x.faz === id).sort((a, b) => (a.tarih || "9").localeCompare(b.tarih || "9") || (a.sira || 0) - (b.sira || 0)); if (!L.length) return "";
+    const b = L.filter(x => x.durum === "bitti").length;
+    return `<div class="faz"><div class="faz-h"><b>${esc(ad)}</b><span>${esc(ar)} · ${b}/${L.length} tamam</span></div><div class="faz-bar"><i style="width:${100 * b / L.length}%"></i></div>
+      <div class="yh-list">${L.map(x => `<div class="yi ${esc(x.durum || "acik")}" data-id="${esc(x.id)}"><b>${esc(x.baslik)}</b><button type="button" class="pill" data-s="${esc(x.durum || "acik")}">${YDL[x.durum || "acik"]}</button>${x.aciklama ? `<p>${esc(x.aciklama)}</p>` : ""}<div class="meta">${x.sorumlu ? `<span>👤 ${esc(x.sorumlu)}</span>` : ""}${x.tarih ? `<span>🎯 ${esc(new Date(x.tarih + "T12:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" }))}</span>` : ""}</div></div>`).join("")}</div></div>`; }).join("");
+  el.querySelectorAll(".yi").forEach(c => { const x = yol.find(y => y.id === c.dataset.id);
+    c.querySelector(".pill").onclick = ev => { ev.stopPropagation(); const n = ST[(ST.indexOf(x.durum || "acik") + 1) % 3]; setDoc(doc(db, "yolharitasi", x.id), { durum: n }, { merge: true }).catch(() => flash("Kaydedilemedi")); };
+    c.onclick = () => yhForm(x); });
+}
+function yhForm(x) { YHEDIT = x ? x.id : null; $("yf-faz").value = x ? x.faz : "f1"; $("yf-kim").value = x ? x.sorumlu || "Hepsi" : "Hepsi"; $("yf-tarih").value = x ? x.tarih || "" : ""; $("yf-durum").value = x ? x.durum || "acik" : "acik";
+  $("yf-baslik").value = x ? x.baslik : ""; $("yf-acik").value = x ? x.aciklama || "" : ""; $("yf-sil").hidden = !x; $("yh-form").hidden = false; $("yf-baslik").focus(); scrollTo(0, 0); }
+$("yh-yeni").onclick = () => yhForm(null);
+$("yf-iptal").onclick = () => { $("yh-form").hidden = true; YHEDIT = null; renderYol(); };
+$("yf-sil").onclick = () => { const s = $("yf-sil"); if (!s.classList.contains("sure")) { s.classList.add("sure"); s.textContent = "Silmek için tekrar tıkla"; setTimeout(() => { s.classList.remove("sure"); s.textContent = "Sil"; }, 4000); return; }
+  deleteDoc(doc(db, "yolharitasi", YHEDIT)).then(() => { $("yh-form").hidden = true; YHEDIT = null; flash("Silindi"); }).catch(() => flash("Silinemedi")); };
+$("yh-form").onsubmit = e => { e.preventDefault(); const d = { faz: $("yf-faz").value, sorumlu: $("yf-kim").value, tarih: $("yf-tarih").value, durum: $("yf-durum").value, baslik: $("yf-baslik").value.trim(), aciklama: $("yf-acik").value.trim(), duzenleyen: MYNAME, ts: Date.now() };
+  (YHEDIT ? setDoc(doc(db, "yolharitasi", YHEDIT), d, { merge: true }) : addDoc(collection(db, "yolharitasi"), d)).then(() => { $("yh-form").hidden = true; YHEDIT = null; flash("Kaydedildi"); renderYol(); }).catch(() => flash("Kaydedilemedi")); };
+
 /* ---------- toplantılar ---------- */
 const ORTAKLAR = [["mustafa", "Mustafa"], ["fatmanur", "Fatma Nur"], ["rumeysa", "Rumeysa"]];
 const lnk = u => /^https?:\/\//.test(u || "") ? u : "";
@@ -372,6 +410,7 @@ $("tp-drivedeg").onclick = () => { const f = $("tp-drivedeg"); if (f.dataset.on)
   box.querySelector("input").value = (ozet && ozet.drive) || ""; $("tp-drive").closest(".tp-top").appendChild(box); box.querySelector("input").focus();
   box.onsubmit = ev => { ev.preventDefault(); const v = box.querySelector("input").value.trim(); setDoc(doc(db, "ortak", "ozet"), { drive: v }, { merge: true }).then(() => { flash("Drive linki kaydedildi"); box.remove(); delete f.dataset.on; }).catch(() => flash("Kaydedilemedi")); };
 };
+window.juvemiToplu = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(([c, i, d]) => b.set(i ? doc(db, c, i) : doc(collection(db, c)), d, { merge: true })); await b.commit(); return "tamam " + L.length; };
 window.juvemiYaz = async (col, id, data) => { if (!ME) throw new Error("önce giriş yap"); if (id) await setDoc(doc(db, col, id), data, { merge: true }); else await addDoc(collection(db, col), data); return "tamam"; };
 
 /* ---------- sohbet ---------- */
@@ -449,6 +488,8 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "giderler"), orderBy("tarih", "desc")), s => { giderler = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderGider(); renderGenel(); renderTabs(); }, () => flash("Giderler okunamadı")));
   unsub.push(onSnapshot(query(collection(db, "etkinlikler"), orderBy("tarih")), s => { etk = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "sermaye"), orderBy("tarih", "desc")), s => { sermaye = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
+  unsub.push(onSnapshot(query(collection(db, "haftalar"), orderBy("baslangic")), s => { haftalar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
+  unsub.push(onSnapshot(collection(db, "yolharitasi"), s => { yol = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "toplantilar"), orderBy("tarih", "desc")), s => { toplantilar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "mesajlar"), orderBy("ts", "desc"), limit(300)), s => { mesajlar = s.docs.map(d => d.data()).reverse(); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "durum"), s => { durum = {}; s.docs.forEach(d => durum[d.id] = d.data()); renderOnline(); }));
