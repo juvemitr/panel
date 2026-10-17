@@ -185,6 +185,26 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 .nav-i[aria-current=page] .si{color:var(--c,var(--ink))!important}
 .side-theme .si{color:var(--ink)!important}
 .ovc b svg{color:var(--muted)}
+
+/* ---------- açılır/kapanır menü ---------- */
+.sidetog{flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow)}
+.sidetog:hover{border-color:var(--slate)}
+.shell{transition:grid-template-columns .22s ease}
+.shell.mini{grid-template-columns:72px minmax(0,1fr)}
+.shell.mini .side{padding:14px 10px;align-items:center}
+.shell.mini .side .sl,.shell.mini .side-sep,.shell.mini .side-logo .logo{display:none}
+.shell.mini .logo-mini{display:inline}
+.shell.mini .nav-i,.shell.mini .side-theme{justify-content:center;padding:6px}
+.shell.mini .side-logo{padding:4px 0 10px}
+@media (max-width:980px){
+  .shell.wide{grid-template-columns:232px minmax(0,1fr)}
+  .shell.wide .side{padding:16px 12px;align-items:stretch}
+  .shell.wide .side .sl,.shell.wide .side-sep{display:block}.shell.wide .side-logo .logo{display:inline}.shell.wide .logo-mini{display:none}
+  .shell.wide .nav-i,.shell.wide .side-theme{justify-content:flex-start;padding:7px 10px}
+  .shell.wide .nav-i .sl{display:inline}
+}
+@media (max-width:600px){.sidetog{display:none}}
+@media (prefers-reduced-motion:reduce){.shell{transition:none}}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -203,7 +223,7 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 </aside>
 <div class="wrap">
   <header>
-    <h1 class="pagetitle" id="apptitle">Uygulamalar</h1>
+    <div style="display:flex;align-items:center;gap:12px;min-width:0"><button type="button" class="sidetog" id="sidetog" aria-label="Menüyü aç/kapat" title="Menüyü aç/kapat"></button><h1 class="pagetitle" id="apptitle">Uygulamalar</h1></div>
     <div class="who"><div><b id="whoname"></b> · <button type="button" id="pwopen">Şifremi değiştir</button> · <button type="button" id="logout">Çıkış</button></div><span class="status" id="status"></span></div>
   </header>
   <form class="card" id="pwform" hidden style="display:grid;gap:8px;grid-template-columns:1fr 1fr 1fr auto;align-items:end">
@@ -293,6 +313,6 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 </div>
 </div>
 
-<script>window.JV="20261017180247";</script>
-<script type="module" src="app.js?v=20261017180247"></script>
+<script>window.JV="20261017180515";</script>
+<script type="module" src="app.js?v=20261017180515"></script>
 </body></html>

@@ -71,6 +71,7 @@ const IC = {
   magaza: '<path d="M3.5 9 5 3.5h14L20.5 9"/><path d="M3.5 9a2.8 2.8 0 0 0 5.6 0 2.8 2.8 0 0 0 5.8 0 2.8 2.8 0 0 0 5.6 0"/><path d="M5 11.5V21h14v-9.5M10 21v-5h4v5"/>',
   sirket: '<path d="M12 3v18M5 7h14M7.5 7 4 14a3.5 3.5 0 0 0 7 0zM16.5 7 13 14a3.5 3.5 0 0 0 7 0z"/><path d="M8 21h8"/>',
   ekip: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.7-4 3.4-6.5 7-6.5s6.3 2.5 7 6.5"/>',
+  menu: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/>',
   auto: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
@@ -87,6 +88,11 @@ const APPS = [
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
 $("logo").onclick = () => go("ana");
+const narrow = () => matchMedia("(max-width:980px)").matches;
+let SIDE = (() => { try { return localStorage.getItem("juvemi-side") || ""; } catch (e) { return ""; } })();
+function applySide() { const s = $("app"); s.classList.toggle("mini", SIDE === "mini"); s.classList.toggle("wide", SIDE === "wide"); }
+$("sidetog").innerHTML = svg("menu", 18); applySide();
+$("sidetog").onclick = () => { const kapali = SIDE === "mini" || (narrow() && SIDE !== "wide"); SIDE = kapali ? (narrow() ? "wide" : "") : "mini"; try { localStorage.setItem("juvemi-side", SIDE); } catch (e) { } applySide(); };
 const TEMA = ["", "light", "dark"], TEMAAD = { "": "Sistem teması", light: "Açık tema", dark: "Koyu tema" }, TEMAIK = { "": "auto", light: "sun", dark: "moon" };
 function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; $("themelbl").textContent = TEMAAD[t]; $("themebtn").querySelector(".si").innerHTML = svg(TEMAIK[t]); $("themebtn").title = TEMAAD[t] + " (değiştirmek için tıkla)"; }
 let THEME = (() => { try { return localStorage.getItem("juvemi-theme") || ""; } catch (e) { return ""; } })(); applyTheme(THEME);
