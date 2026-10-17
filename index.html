@@ -2,7 +2,7 @@
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Juvémi Panel</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: logo + kişi çipi → sekmeler → sekme içeriği (genel, görevlerim, giderler, modüller) */
 :root{
@@ -40,7 +40,7 @@ textarea,input,select{width:100%;box-sizing:border-box;border:1px solid var(--li
 .note{grid-column:2/4;margin-top:6px;resize:vertical;min-height:38px}
 .del{background:none;border:0;color:var(--muted);font:600 12px var(--body);cursor:pointer;padding:2px 0;justify-self:start}.del.sure{color:var(--bad)}
 .task .del{grid-column:2/4}
-.form{display:grid;gap:8px;grid-template-columns:1fr 1.4fr auto}
+.form{display:grid;gap:8px;grid-template-columns:1fr 1.4fr auto}#addform{grid-template-columns:1fr 1.4fr 150px auto}
 .btn{border:0;border-radius:8px;background:var(--mustard);color:var(--onm);font:700 14px var(--body);padding:9px 16px;cursor:pointer;white-space:nowrap}
 .btn.dark{background:var(--ink);color:var(--bg)}
 .gform{display:grid;gap:8px;grid-template-columns:130px 1fr 170px 120px 150px auto;align-items:end}
@@ -79,7 +79,70 @@ td.num2,th.num2{text-align:right;font-variant-numeric:tabular-nums;white-space:n
 .gerr{color:var(--bad);font-size:13px;min-height:18px;text-align:center}
 .who{font-size:13px;color:var(--muted);text-align:right}.who b{color:var(--ink)}
 .who button{background:none;border:0;color:var(--slate);font:700 13px var(--body);cursor:pointer;padding:0}
+.appbar{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.appbar button{background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:700 13px var(--body);padding:7px 12px;cursor:pointer}
+.appbar span{font-family:var(--display);font-weight:600;font-size:20px}
+.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.app{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);min-width:0}
+.app:hover{border-color:var(--slate);transform:translateY(-1px)}.app[disabled]{opacity:.55;cursor:default;transform:none}
+.app i{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font:700 20px var(--display);font-style:normal;color:#fff}
+.app b{font-size:15px}.app span{font-size:12px;color:var(--muted)}
+.cal-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cal-head b{font-family:var(--display);font-size:20px;font-weight:600;min-width:150px}
+.cal-head button{background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:700 14px var(--body);padding:6px 12px;cursor:pointer}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-left:auto}.legend s{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;text-decoration:none;vertical-align:-1px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:10px}
+.cal .dow{font-size:11px;color:var(--muted);font-weight:700;text-align:center;padding:4px 0}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-height:84px;padding:5px;display:flex;flex-direction:column;gap:3px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);min-width:0;overflow:hidden}
+.day.out{opacity:.4}.day.today{border-color:var(--mustard)}.day.sel{box-shadow:0 0 0 2px var(--slate)}
+.day .dn{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.ev{font-size:11px;line-height:1.3;border-radius:4px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.o{background:var(--wipbg);color:var(--mustard)}.ev.k{background:var(--openbg);color:var(--slate)}.ev.k.d{text-decoration:line-through;opacity:.7}
+.more{font-size:11px;color:var(--muted)}
+@media (max-width:560px){.day{min-height:52px}.ev{font-size:0;height:6px;padding:0}.legend{margin-left:0}}
+.daylist{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.daylist li{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px}
+.daylist li .chip{flex:none}.daylist li span{flex:1;min-width:0}
+.calform{display:grid;gap:8px;grid-template-columns:1fr 110px 170px auto}
+@media (max-width:640px){.calform{grid-template-columns:1fr 1fr}.calform input:first-child{grid-column:1/3}}
+.tdate{grid-column:2/4;justify-self:start;width:auto;font-size:12px;padding:4px 8px}
 @media (max-width:640px){#pwform{grid-template-columns:1fr!important}}
+
+/* ---------- modern katman ---------- */
+:root{--body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--bg:#F3F5F8;--surface:#FFFFFF;--line:#E6EAF0;--shadow:0 1px 2px rgba(20,30,40,.04),0 8px 24px rgba(20,30,40,.06);--shadow-h:0 2px 4px rgba(20,30,40,.06),0 16px 40px rgba(20,30,40,.10);--glass:rgba(255,255,255,.72)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1214;--surface:#181C1F;--line:#262C31;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);--shadow-h:0 2px 4px rgba(0,0,0,.35),0 16px 40px rgba(0,0,0,.4);--glass:rgba(15,18,20,.72)}}
+:root[data-theme="dark"]{--bg:#0F1214;--surface:#181C1F;--line:#262C31;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);--shadow-h:0 2px 4px rgba(0,0,0,.35),0 16px 40px rgba(0,0,0,.4);--glass:rgba(15,18,20,.72)}
+body{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in srgb,var(--mustard) 14%,transparent),transparent 60%),radial-gradient(900px 500px at -10% 0%,color-mix(in srgb,var(--slate) 16%,transparent),transparent 60%),var(--bg);background-attachment:fixed;font-size:14.5px;letter-spacing:-.005em}
+.wrap{gap:22px;padding-block:0 64px}
+header{position:sticky;top:0;z-index:20;margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:14px max(16px,env(safe-area-inset-left,0px));background:var(--glass);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid var(--line)}
+header .logo{font-size:30px}
+.who{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.who>div{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 12px 4px 4px;box-shadow:var(--shadow)}
+.who>div::before{content:attr(data-ini);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--slate),var(--mustard));color:#fff;font:800 12px var(--body)}
+h2{font-family:var(--body);font-weight:700;font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.fact,.card,.task,.mod,.tablewrap,.day,.daylist li,.app{border-radius:16px;box-shadow:var(--shadow);border-color:var(--line)}
+.fact{padding:14px 16px}.fact b{font-weight:600;margin-bottom:2px}.fact span{font-size:15px}
+.ovc{transition:transform .15s,box-shadow .15s}.ovc:hover{transform:translateY(-2px);box-shadow:var(--shadow-h);border-color:var(--line)}
+.apps{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.app{padding:18px;gap:12px;transition:transform .18s,box-shadow .18s}
+.app:hover{transform:translateY(-3px);box-shadow:var(--shadow-h);border-color:var(--line)}
+.app i{width:52px;height:52px;border-radius:16px;font-size:22px;box-shadow:inset 0 -6px 12px rgba(0,0,0,.12),0 6px 14px color-mix(in srgb,currentColor 0%,rgba(0,0,0,.12))}
+.app b{font-size:15px;font-weight:700}
+.appbar{border:0;padding:0}
+.appbar button{border-radius:99px;padding:7px 14px;box-shadow:var(--shadow)}
+.appbar span{font-family:var(--body);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.task{padding:16px 18px}.task:hover{box-shadow:var(--shadow-h)}
+.pill{padding:6px 12px}
+textarea,input,select{border-radius:10px;background:var(--surface);border-color:var(--line);padding:9px 12px}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--slate);box-shadow:0 0 0 3px color-mix(in srgb,var(--slate) 22%,transparent)}
+.btn{border-radius:10px;padding:10px 18px;background:linear-gradient(180deg,color-mix(in srgb,var(--mustard) 92%,#fff),var(--mustard));box-shadow:0 4px 12px color-mix(in srgb,var(--mustard) 35%,transparent)}
+.btn.dark{background:var(--ink);box-shadow:none}
+.bar{height:8px}.bar i{background:linear-gradient(90deg,var(--slate),var(--mustard))}
+.day{min-height:92px;border-radius:12px;box-shadow:none}.day:hover{border-color:var(--slate)}
+.ev{border-radius:6px;padding:2px 6px}
+.big{font-size:32px;font-weight:700}
+.gate{background:transparent}.gbox{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:var(--shadow-h);max-width:380px}
+.empty{border-radius:16px}
+@media (prefers-reduced-motion:reduce){.app,.ovc{transition:none}}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -102,12 +165,25 @@ td.num2,th.num2{text-align:right;font-variant-numeric:tabular-nums;white-space:n
     <button class="btn">Değiştir</button>
     <div class="muted" id="pw-msg" style="grid-column:1/-1"></div>
   </form>
-  <nav class="tabs" id="tabs" role="tablist"></nav>
+  <nav class="appbar" id="appbar" hidden><button type="button" id="homebtn">← Uygulamalar</button><span id="apptitle"></span></nav>
+  <div class="pane" data-pane="ana">
+    <section><h2>Uygulamalar</h2><div class="apps" id="apps"></div></section>
+    <section><h2>Şirket alanları</h2><div class="grid" id="ov"></div></section>
+  </div>
+  <div class="pane" data-pane="takvim">
+    <section>
+      <div class="cal-head"><button type="button" id="cal-prev" aria-label="Önceki ay">‹</button><b id="cal-title"></b><button type="button" id="cal-next" aria-label="Sonraki ay">›</button><button type="button" id="cal-today">Bugün</button>
+        <div class="legend"><span><s style="background:var(--mustard)"></s>Ortak</span><span><s style="background:var(--slate)"></s>Kişisel görevim</span></div></div>
+      <div class="cal" id="cal"></div>
+    </section>
+    <section><h2 id="day-title"></h2><ul class="daylist" id="daylist"></ul>
+      <form class="calform" id="calform"><input id="c-baslik" placeholder="Ne var? (ör. Mali müşavir görüşmesi)" autocomplete="off" required><input type="time" id="c-saat" aria-label="Saat (isteğe bağlı)"><select id="c-tur"><option value="o">Ortak etkinlik</option><option value="k">Kişisel görev</option></select><button class="btn">Ekle</button></form>
+    </section>
+  </div>
 
   <div class="pane" data-pane="genel">
     <section><h2>Netleşenler</h2><div class="grid" id="facts"><div class="empty">Yükleniyor…</div></div></section>
     <section><h2>Harcamalar</h2><div class="grid" id="gozet"></div></section>
-    <section><h2>Modüller</h2><div class="grid" id="ov"></div></section>
     <section><h2>Açık riskler</h2><ul class="risks" id="risks"></ul></section>
     <section><h2>Ekip günlüğü</h2>
       <form class="form" id="logform" style="grid-template-columns:1fr auto"><input id="logtext" placeholder="Bugün ne oldu? (ör. ikas'a mail atıldı)" autocomplete="off"><button class="btn dark">Ekle</button></form>
@@ -118,7 +194,7 @@ td.num2,th.num2{text-align:right;font-variant-numeric:tabular-nums;white-space:n
     <section><h2>Görevlerim</h2>
       <p class="muted" style="margin:0 0 10px">Bu liste sadece sana görünür. Ortakların kendi listelerini görür.</p>
       <div class="progress"><div class="bar"><i id="barfill" style="width:0"></i></div><div class="pnum" id="pnum">0 / 0</div></div>
-      <form class="form" id="addform" style="margin-top:14px"><input id="add-t" placeholder="Yeni görev başlığı" autocomplete="off" required><input id="add-d" placeholder="Kısa açıklama (isteğe bağlı)" autocomplete="off"><button class="btn">Görev ekle</button></form>
+      <form class="form" id="addform" style="margin-top:14px"><input id="add-t" placeholder="Yeni görev başlığı" autocomplete="off" required><input id="add-d" placeholder="Kısa açıklama (isteğe bağlı)" autocomplete="off"><input type="date" id="add-tarih" aria-label="Tarih (isteğe bağlı)"><button class="btn">Görev ekle</button></form>
       <div class="tasks" id="tasks" style="margin-top:12px"></div>
     </section>
   </div>
