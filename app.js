@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, deleteDoc, getDoc, query, orderBy, limit, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, deleteDoc, getDoc, query, orderBy, limit, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyAJuXuCwgFVVNfn9ASWOlynInHx-FZMd5A",
@@ -22,7 +22,7 @@ const ODEYEN = ["Mustafa", "Rumeysa", "Fatma Nur", "Ortak kasa"], ORTAK = ["Must
 const TL = n => "₺" + Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
 
-let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", mesajlar = [], toplantilar = [], haftalar = [], yol = [], YHEDIT = null, TPACIK = null, TPEDIT = null, panel = { gorevler: [] }, unsub = [];
+let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", mesajlar = [], toplantilar = [], ST_SON = null, ST_YUK = false, haftalar = [], yol = [], YHEDIT = null, TPACIK = null, TPEDIT = null, panel = { gorevler: [] }, unsub = [];
 let TAB = (location.hash || "").slice(1) || (() => { try { return localStorage.getItem("juvemi-tab"); } catch (e) { } })() || "ana";
 function flash(m) { $("status").textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => $("status").textContent = "", 2500); }
 
@@ -78,6 +78,7 @@ const IC = {
   chev: '<path d="m6 9 6 6 6-6"/>',
   yol: '<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/>',
   upload: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+  ayar: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   menu: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/>',
@@ -96,7 +97,8 @@ const APPS = [
   { id: "toplantilar", ad: "Toplantılar", renk: "#4F6BB8", ik: "toplantilar", alt: () => toplantilar.length ? toplantilar.length + " kayıt · son " + new Date(toplantilar[0].tarih + "T12:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "Haftalık değerlendirmeler" },
   { id: "toplanti", ad: "Görüntülü Görüşme", renk: "#D06A2C", ik: "toplanti", alt: () => "Jitsi ekip odası" },
   { id: "ekip", ad: "Ekip", renk: "#2F8C8C", ik: "ekipapp", alt: () => ekip.length ? ekip.length + " kurucu ortak" : "Kurucu ortaklar" },
-  { id: "butce", ad: "Bütçe & Sermaye", renk: "#7A6CB0", ik: "butce", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
+  { id: "butce", ad: "Bütçe & Sermaye", renk: "#7A6CB0", ik: "butce", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } },
+  { id: "ayarlar", ad: "Ayarlar", renk: "#6B7280", ik: "ayar", sadece: "mustafa", alt: () => ST_SON ? "Depolama %" + ST_SON.pct.toFixed(3) : "Depolama ve sınırlar" }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
 $("logo").onclick = () => go("ana");
@@ -111,15 +113,16 @@ function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else
 let THEME = (() => { try { return localStorage.getItem("juvemi-theme") || ""; } catch (e) { return ""; } })(); applyTheme(THEME);
 $("themebtn").onclick = () => { THEME = TEMA[(TEMA.indexOf(THEME) + 1) % 3]; try { localStorage.setItem("juvemi-theme", THEME); } catch (e) { } applyTheme(THEME); };
 function renderTabs() {
-  const mod = mods.find(m => m.id === TAB), app = APPS.find(x => x.id === TAB && !x.yakinda);
+  const mod = mods.find(m => m.id === TAB), app = APPS.find(x => x.id === TAB && !x.yakinda && (!x.sadece || x.sadece === KADI));
+  if (!app && APPS.some(x => x.id === TAB && x.sadece) && KADI) TAB = "ana";
   if (!mod && !app && TAB !== "ana" && mods.length) TAB = "ana";
   $("apptitle").textContent = mod ? mod.ad : (app ? app.ad : "Uygulamalar");
   $("sidenav").innerHTML = `<button type="button" class="nav-i" data-t="ana"${TAB === "ana" ? ' aria-current="page"' : ""} title="Ana ekran"><span class="si">${svg("home")}</span><span class="sl">Ana ekran</span></button>`
-    + APPS.map(x => `<button type="button" class="nav-i" data-t="${x.id}"${x.yakinda ? " disabled" : ""}${TAB === x.id ? ' aria-current="page"' : ""} title="${esc(x.ad)}"><span class="si" style="--c:${x.renk}">${svg(x.ik)}</span><span class="sl">${esc(x.ad)}</span>${x.id === "sohbet" && okunmamis() ? `<span class="nbadge">${okunmamis()}</span>` : ""}</button>`).join("")
+    + APPS.filter(x => !x.sadece || x.sadece === KADI).map(x => `<button type="button" class="nav-i" data-t="${x.id}"${x.yakinda ? " disabled" : ""}${TAB === x.id ? ' aria-current="page"' : ""} title="${esc(x.ad)}"><span class="si" style="--c:${x.renk}">${svg(x.ik)}</span><span class="sl">${esc(x.ad)}</span>${x.id === "sohbet" && okunmamis() ? `<span class="nbadge">${okunmamis()}</span>` : ""}</button>`).join("")
     + (mods.length ? `<div class="side-sep">Şirket</div>` + mods.map(m => `<button type="button" class="nav-i nm" data-t="${esc(m.id)}"${TAB === m.id ? ' aria-current="page"' : ""} title="${esc(m.ad)}"><span class="si">${svg(m.id)}</span><span class="sl">${esc(m.ad)}</span></button>`).join("") : "");
   $("sidenav").querySelectorAll(".nav-i:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
   document.querySelectorAll(".pane").forEach(p => p.hidden = !(p.dataset.pane === TAB || (mod && p.dataset.pane === "mod")));
-  $("apps").innerHTML = APPS.map(x => `<button type="button" class="app" data-t="${x.id}"${x.yakinda ? " disabled" : ""}><i style="--c:${x.renk}">${svg(x.ik, 24)}</i><b>${esc(x.ad)}</b><span>${esc(x.alt())}</span></button>`).join("");
+  $("apps").innerHTML = APPS.filter(x => !x.sadece || x.sadece === KADI).map(x => `<button type="button" class="app" data-t="${x.id}"${x.yakinda ? " disabled" : ""}><i style="--c:${x.renk}">${svg(x.ik, 24)}</i><b>${esc(x.ad)}</b><span>${esc(x.alt())}</span></button>`).join("");
   $("apps").querySelectorAll(".app:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
   if (mod) $("modpane").innerHTML = `<section><p class="muted" style="margin:0 0 12px">${esc(mod.aciklama)}</p><div class="mods">${(mod.bolumler || []).map(b => `<div class="mod"><div class="row"><b>${esc(b.ad)}</b><span class="tag ${esc(b.durum)}">${TAG[b.durum] || esc(b.durum)}</span></div>${b.not ? `<div class="muted">${esc(b.not)}</div>` : ""}</div>`).join("")}</div></section>`;
   if (TAB === "takvim") renderCal();
@@ -127,6 +130,7 @@ function renderTabs() {
   if (TAB === "ekip") renderEkip();
   if (TAB === "toplantilar") renderTp();
   if (TAB === "yol") renderYol();
+  if (TAB === "ayarlar" && KADI === "mustafa" && !ST_SON && !ST_YUK) hesapla();
   renderUpl();
   if (TAB === "sohbet") { renderChat(); okundu(); }
   if (TAB !== "toplanti" && $("meetframe").querySelector("iframe")) meetEnd();
@@ -324,6 +328,34 @@ function renderEkip() {
 }
 function kucult(file, S) { return new Promise((res, rej) => { const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); c.width = c.height = S; const k = Math.min(img.width, img.height), sx = (img.width - k) / 2, sy = (img.height - k) / 2; c.getContext("2d").drawImage(img, sx, sy, k, k, 0, 0, S, S); URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg", .82)); }; img.onerror = rej; img.src = URL.createObjectURL(file); }); }
 window.juvemiEkipKur = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(x => b.set(doc(db, "ekip", x.id), x.data, { merge: true })); await b.commit(); return "tamam"; };
+
+/* ---------- ayarlar (sadece mustafa) ---------- */
+const KOL = [["ortak", "Özet ve netleşenler"], ["moduller", "Şirket alanları"], ["giderler", "Giderler"], ["sermaye", "Sermaye"], ["butce", "Aylık bütçe"], ["gunluk", "Ekip günlüğü"], ["mesajlar", "Sohbet mesajları"], ["etkinlikler", "Takvim etkinlikleri"], ["ekip", "Ekip profilleri (fotoğraflar)"], ["toplantilar", "Toplantı kayıtları"], ["yolharitasi", "Yol haritası"], ["haftalar", "Haftalık klasörler"], ["durum", "Çevrimiçi durumu"]];
+const GIB = 1024 ** 3;
+const boyutYaz = b => b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : (b / 1048576).toFixed(2) + " MB";
+const dokBoyut = (col, id, data) => new TextEncoder().encode(JSON.stringify(data)).length + col.length + id.length + 48;
+async function hesapla() {
+  ST_YUK = true; $("st-sub").textContent = "Hesaplanıyor…";
+  try {
+    const sat = []; let top = 0, adet = 0;
+    for (const [c, ad] of KOL) { const s = await getDocs(collection(db, c)); let b = 0; s.docs.forEach(d => b += dokBoyut(c, d.id, d.data())); sat.push([ad, s.size, b]); top += b; adet += s.size; }
+    const me = await getDoc(doc(db, "kullanicilar", ME)); const mb = me.exists() ? dokBoyut("kullanicilar", ME, me.data()) : 0;
+    sat.push(["Kişisel görev listeleri (3 kişi, tahmini)", 3, mb * 3]); top += mb * 3; adet += 3;
+    ST_SON = { top, adet, pct: 100 * top / GIB, sat, zaman: new Date() };
+  } catch (e) { $("st-sub").textContent = "Hesaplanamadı: " + (e.code || e.message); }
+  ST_YUK = false; renderAyar();
+}
+function renderAyar() {
+  if (!ST_SON) return; const S = ST_SON, mx = Math.max(1, ...S.sat.map(x => x[2]));
+  $("st-used").textContent = boyutYaz(S.top) + " / 1 GiB";
+  $("st-sub").textContent = "%" + S.pct.toFixed(4) + " kullanıldı · " + S.adet + " kayıt · " + S.zaman.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) + " itibarıyla";
+  $("st-fill").style.width = Math.max(.4, S.pct) + "%";
+  $("st-table").innerHTML = S.sat.sort((a, b) => b[2] - a[2]).map(([ad, n, b]) => `<tr><td>${esc(ad)}</td><td class="num2">${n}</td><td class="num2">${boyutYaz(b)}</td><td><div class="st-mini"><i style="width:${100 * b / mx}%"></i></div></td></tr>`).join("");
+  const yil = S.top > 0 ? "Bu hızla 1 GiB'a ulaşmak çok uzun sürer; fotoğraflar en büyük kalem." : "";
+  $("st-diger").innerHTML = [["Günlük okuma", "50.000 / gün"], ["Günlük yazma", "20.000 / gün"], ["Giriş (Authentication)", "Ücretsiz, sınırsız e-posta/şifre"], ["Yayın (GitHub Pages)", "1 GB site · 100 GB/ay trafik"], ["Drive", "Kişisel Google hesabı kotası"], ["Durum", yil || "—"]]
+    .map(([b, v]) => `<div class="fact"><b>${b}</b><span>${esc(v)}</span></div>`).join("");
+}
+$("st-yenile").onclick = () => { ST_SON = null; hesapla(); };
 
 /* ---------- haftalık yükleme ---------- */
 function buHafta() { const t = bugun(); return haftalar.find(w => w.baslangic <= t && t <= w.bitis) || haftalar[haftalar.length - 1]; }

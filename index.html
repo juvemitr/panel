@@ -321,6 +321,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .yi.bitti b{text-decoration:line-through;opacity:.6}
 .yi .meta{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .yi p{grid-column:1/-1;margin:0;font-size:13.5px;color:var(--muted)}
+
+/* ---------- ayarlar ---------- */
+.st-hero{display:flex;flex-direction:column;gap:12px}
+.st-bar{height:14px;border-radius:99px;background:var(--line);overflow:hidden}.st-bar i{display:block;height:100%;min-width:4px;background:linear-gradient(90deg,var(--ok),var(--mustard));border-radius:99px}
+.st-mini{height:6px;border-radius:99px;background:var(--line);overflow:hidden}.st-mini i{display:block;height:100%;background:var(--slate)}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -422,6 +427,16 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     </form>
     <section class="yh" id="yh"><div class="empty">Yol haritası yükleniyor…</div></section>
   </div>
+  <div class="pane" data-pane="ayarlar">
+    <section class="card st-hero">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0 0 6px">Veritabanı depolama · ücretsiz plan</h2><div class="big" id="st-used">—</div><div class="muted" id="st-sub">Hesaplanıyor…</div></div><button type="button" class="btn dark" id="st-yenile">Yeniden hesapla</button></div>
+      <div class="st-bar"><i id="st-fill" style="width:0"></i></div>
+      <div class="muted" style="font-size:12px">Sınır: 1 GiB depolama · günlük 50.000 okuma / 20.000 yazma / 20.000 silme. Değerler panelin gördüğü kayıtlardan hesaplanan yaklaşık değerlerdir; kesin rakam için Firebase konsolu.</div>
+    </section>
+    <section><h2>Koleksiyon bazında</h2><div class="tablewrap"><table><thead><tr><th>Bölüm</th><th class="num2">Kayıt</th><th class="num2">Yaklaşık boyut</th><th style="width:34%"></th></tr></thead><tbody id="st-table"></tbody></table></div></section>
+    <section><h2>Diğer ücretsiz sınırlar</h2><div class="grid" id="st-diger"></div></section>
+    <section><h2>Bağlantılar</h2><div class="tp-act"><a class="btn dark" style="text-decoration:none" target="_blank" rel="noopener" href="https://console.firebase.google.com/u/0/project/juvemi-panel/usage">Firebase kullanım raporu ↗</a><a class="btn dark" style="text-decoration:none" target="_blank" rel="noopener" href="https://console.firebase.google.com/u/0/project/juvemi-panel/authentication/users">Kullanıcılar ↗</a><a class="btn dark" style="text-decoration:none" target="_blank" rel="noopener" href="https://github.com/juvemitr/panel">Kod deposu ↗</a></div></section>
+  </div>
   <div class="pane" data-pane="ekip">
     <section><div class="team" id="team"><div class="empty">Ekip bilgileri yükleniyor…</div></div></section>
   </div>
@@ -472,6 +487,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 </div>
 
-<script>window.JV="20261017231909";</script>
-<script type="module" src="app.js?v=20261017231909"></script>
+<script>window.JV="20261017232800";</script>
+<script type="module" src="app.js?v=20261017232800"></script>
 </body></html>
