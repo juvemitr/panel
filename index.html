@@ -276,6 +276,33 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .meet-frame{height:calc(100dvh - 220px);min-height:380px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
 .meet-frame iframe{width:100%;height:100%;border:0}
 .meet-frame .empty{margin:18px}
+
+/* ---------- toplantılar ---------- */
+.tp-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 18px;flex-direction:row}
+.tp-form{display:flex;flex-direction:column;gap:12px}
+.tp-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.tp-g{display:grid;grid-template-columns:180px 1fr;gap:10px}
+.tp-kisiler{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.tp-kisi{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.tp-kisi h4{margin:0;font:800 14px var(--body)}
+#tp-list{display:flex;flex-direction:column;gap:12px}
+.tp{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.tp-h{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;width:100%;background:none;border:0;text-align:left;color:var(--ink);font:inherit}
+.tp-date{flex:none;width:52px;text-align:center;border-radius:12px;background:color-mix(in srgb,var(--slate) 14%,transparent);padding:6px 0}
+.tp-date b{display:block;font:800 20px var(--body);line-height:1}.tp-date span{font:700 11px var(--body);color:var(--muted);text-transform:uppercase}
+.tp-h .t{flex:1;min-width:0}.tp-h .t b{font-size:16px}.tp-h .t div{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-h .ch{color:var(--muted);transition:transform .2s}.tp.open .tp-h .ch{transform:rotate(180deg)}
+.tp-b{display:none;padding:0 18px 18px;flex-direction:column;gap:16px}.tp.open .tp-b{display:flex}
+.tp-b h3{margin:0 0 6px;font:700 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tp-b p{margin:0;white-space:pre-wrap;line-height:1.6}
+.tp-u{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.tp-u .c{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tp-u .c .hd{display:flex;align-items:center;gap:8px;font-weight:800}.tp-u .c .hd .ou{margin:0;width:28px;height:28px;font-size:11px}.tp-u .c .hd .ou::after{display:none}
+.tp-u .c small{font:700 11px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tp-u .c a,.tp-b a.lnk{color:var(--slate);font-weight:700;font-size:13px}
+.tp-ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.tp-act{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:600px){.tp-g{grid-template-columns:1fr}}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -351,6 +378,22 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="meet-frame" id="meetframe"><div class="empty">Toplantıya katıl'a basınca kamera ve mikrofon izni istenir. Aynı odaya giren herkes birbirini görür.<br><br>İlk girişte oda yöneticisi olarak Jitsi bir kez Google ile giriş isteyebilir; diğerleri sonra doğrudan katılır.</div></div>
     </section>
   </div>
+  <div class="pane" data-pane="toplantilar">
+    <section class="tp-top">
+      <div><b>Haftalık üretimler klasörü</b><div class="muted" id="tp-drivedurum">Google Drive'daki ortak klasör</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" id="tp-drive" target="_blank" rel="noopener" style="text-decoration:none">Drive klasörünü aç</a><button type="button" class="btn dark" id="tp-drivedeg">Linki değiştir</button><button type="button" class="btn dark" id="tp-yeni">+ Yeni toplantı kaydı</button></div>
+    </section>
+    <form class="card tp-form" id="tp-form" hidden>
+      <div class="tp-g"><label>Tarih<input type="date" id="tf-tarih" required></label><label class="w2">Başlık<input id="tf-baslik" placeholder="ör. 1. Hafta değerlendirmesi" required></label></div>
+      <label>Bu haftanın Drive bağlantısı (isteğe bağlı)<input id="tf-drive" type="url" placeholder="https://drive.google.com/…"></label>
+      <label>Toplantı özeti<textarea id="tf-ozet" rows="4"></textarea></label>
+      <div class="tp-kisiler" id="tf-kisiler"></div>
+      <label>Alınan kararlar (her satıra bir karar)<textarea id="tf-karar" rows="4"></textarea></label>
+      <label><span>Aksiyonlar (her satıra bir iş, ör. Rumeysa: Ekim paketi taslağı · 24 Eki)</span><textarea id="tf-aksiyon" rows="4"></textarea></label>
+      <div style="display:flex;gap:8px"><button class="btn">Kaydet</button><button type="button" class="btn dark" id="tf-iptal">Vazgeç</button></div>
+    </form>
+    <section id="tp-list"><div class="empty">Toplantı kayıtları yükleniyor…</div></section>
+  </div>
   <div class="pane" data-pane="ekip">
     <section><div class="team" id="team"><div class="empty">Ekip bilgileri yükleniyor…</div></div></section>
   </div>
@@ -401,6 +444,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 </div>
 
-<script>window.JV="20261017202004";</script>
-<script type="module" src="app.js?v=20261017202004"></script>
+<script>window.JV="20261017231212";</script>
+<script type="module" src="app.js?v=20261017231212"></script>
 </body></html>
