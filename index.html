@@ -205,6 +205,12 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 }
 @media (max-width:600px){.sidetog{display:none}}
 @media (prefers-reduced-motion:reduce){.shell{transition:none}}
+.side-top{display:flex;align-items:center;justify-content:space-between;gap:6px;padding-bottom:8px}
+.side-top .side-logo{padding:6px 10px}
+.side-top .sidetog{width:32px;height:32px;box-shadow:none;background:transparent;border-color:transparent;color:var(--muted)}
+.side-top .sidetog:hover{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.shell.mini .side-top{flex-direction:column;gap:8px}
+@media (max-width:980px){.shell:not(.wide) .side-top{flex-direction:column;gap:8px}}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -217,13 +223,13 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 </form></div>
 <div class="shell" id="app" hidden>
 <aside class="side" id="side">
-  <button type="button" class="side-logo" id="logo" title="Ana ekran"><span class="logo">Juvé<span class="m">m</span><span class="i">i</span></span><img class="logo-mini" src="mi.png" alt="Juvémi" width="34" height="32"></button>
+<div class="side-top"><button type="button" class="side-logo" id="logo" title="Ana ekran"><span class="logo">Juvé<span class="m">m</span><span class="i">i</span></span><img class="logo-mini" src="mi.png" alt="Juvémi" width="34" height="32"></button><button type="button" class="sidetog" id="sidetog" aria-label="Menüyü aç/kapat" title="Menüyü aç/kapat"></button></div>
   <nav class="side-nav" id="sidenav" aria-label="Uygulamalar"></nav>
   <button type="button" class="side-theme" id="themebtn"><span class="si"></span><span class="sl" id="themelbl">Tema</span></button>
 </aside>
 <div class="wrap">
   <header>
-    <div style="display:flex;align-items:center;gap:12px;min-width:0"><button type="button" class="sidetog" id="sidetog" aria-label="Menüyü aç/kapat" title="Menüyü aç/kapat"></button><h1 class="pagetitle" id="apptitle">Uygulamalar</h1></div>
+    <h1 class="pagetitle" id="apptitle">Uygulamalar</h1>
     <div class="who"><div><b id="whoname"></b> · <button type="button" id="pwopen">Şifremi değiştir</button> · <button type="button" id="logout">Çıkış</button></div><span class="status" id="status"></span></div>
   </header>
   <form class="card" id="pwform" hidden style="display:grid;gap:8px;grid-template-columns:1fr 1fr 1fr auto;align-items:end">
@@ -313,6 +319,6 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 </div>
 </div>
 
-<script>window.JV="20261017180639";</script>
-<script type="module" src="app.js?v=20261017180639"></script>
+<script>window.JV="20261017180711";</script>
+<script type="module" src="app.js?v=20261017180711"></script>
 </body></html>
