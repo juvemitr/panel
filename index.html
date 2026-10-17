@@ -240,6 +240,36 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 .ou:not(.on) img{filter:grayscale(.6);opacity:.75}
 .who .status:empty{display:none}
 @media (max-width:760px){.who>div{font-size:0;padding:4px}.who>div button{font-size:0}.who>div b{font-size:13px}#pwopen{display:none}}
+
+/* ---------- döndürme / mobil ---------- */
+.shell{min-height:100vh;min-height:100dvh}
+@media (min-width:601px){.side{height:100vh;height:100dvh}}
+@media (max-width:600px){.side{height:auto!important;top:auto!important}}
+@media (pointer:coarse){body{background-attachment:scroll}}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* ---------- sohbet ---------- */
+.chat{display:flex;flex-direction:column;height:calc(100dvh - 130px);min-height:360px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.chat-list{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:10px;align-items:flex-end;max-width:80%}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.msg .ou{margin:0;width:30px;height:30px;font-size:11px}.msg .ou::after{display:none}
+.bub{background:var(--bg);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:8px 12px;min-width:0}
+.msg.me .bub{background:color-mix(in srgb,var(--slate) 16%,var(--surface));border-color:transparent;border-radius:16px 16px 4px 16px}
+.bub b{font-size:12px;display:block;color:var(--slate)}.bub p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14.5px}
+.bub time{display:block;font-size:10.5px;color:var(--muted);margin-top:3px;text-align:right}
+.daysep{align-self:center;font:700 11px var(--body);color:var(--muted);background:var(--bg);border-radius:99px;padding:3px 10px}
+.chat-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:var(--surface)}
+.chat-form textarea{flex:1;resize:none;max-height:140px;min-height:42px}
+.nbadge{margin-left:auto;background:#E5484D;color:#fff;border-radius:99px;font:800 10.5px var(--body);padding:1px 6px}
+.shell.mini .nbadge{position:absolute;margin:0;transform:translate(12px,-12px)}
+.nav-i{position:relative}
+@media (max-width:600px){.chat{height:calc(100dvh - 200px)}.msg{max-width:92%}}
+/* ---------- toplantı ---------- */
+.meet{display:flex;flex-direction:column;gap:12px}
+.meet-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 18px}
+.meet-frame{height:calc(100dvh - 220px);min-height:380px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.meet-frame iframe{width:100%;height:100%;border:0}
+.meet-frame .empty{margin:18px}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
@@ -302,6 +332,19 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
     </section>
   </div>
 
+  <div class="pane" data-pane="sohbet">
+    <section class="chat">
+      <div class="chat-list" id="chatlist"><div class="empty">Mesajlar yükleniyor…</div></div>
+      <form class="chat-form" id="chatform"><textarea id="chattext" rows="1" placeholder="Mesaj yaz… (Enter gönderir, Shift+Enter yeni satır)" autocomplete="off"></textarea><button class="btn" aria-label="Gönder">Gönder</button></form>
+    </section>
+  </div>
+  <div class="pane" data-pane="toplanti">
+    <section class="meet">
+      <div class="meet-bar"><div><b>Juvémi ekip odası</b><div class="muted" id="meetroom"></div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="meetstart">Toplantıya katıl</button><a class="btn dark" id="meetnew" target="_blank" rel="noopener" style="text-decoration:none">Yeni sekmede aç</a><button type="button" class="btn dark" id="meetend" hidden>Ayrıl</button></div></div>
+      <div class="meet-frame" id="meetframe"><div class="empty">Toplantıya katıl'a basınca kamera ve mikrofon izni istenir. Aynı odaya giren herkes birbirini görür.<br><br>İlk girişte oda yöneticisi olarak Jitsi bir kez Google ile giriş isteyebilir; diğerleri sonra doğrudan katılır.</div></div>
+    </section>
+  </div>
   <div class="pane" data-pane="ekip">
     <section><div class="team" id="team"><div class="empty">Ekip bilgileri yükleniyor…</div></div></section>
   </div>
@@ -352,6 +395,6 @@ header{margin:0 calc(-1*max(28px,env(safe-area-inset-left,0px)));padding:14px ma
 </div>
 </div>
 
-<script>window.JV="20261017181329";</script>
-<script type="module" src="app.js?v=20261017181329"></script>
+<script>window.JV="20261017181858";</script>
+<script type="module" src="app.js?v=20261017181858"></script>
 </body></html>

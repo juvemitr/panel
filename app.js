@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, deleteDoc, getDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, deleteDoc, getDoc, query, orderBy, limit, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyAJuXuCwgFVVNfn9ASWOlynInHx-FZMd5A",
@@ -22,7 +22,7 @@ const ODEYEN = ["Mustafa", "Rumeysa", "Fatma Nur", "Ortak kasa"], ORTAK = ["Must
 const TL = n => "₺" + Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
 
-let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", panel = { gorevler: [] }, unsub = [];
+let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", mesajlar = [], panel = { gorevler: [] }, unsub = [];
 let TAB = (location.hash || "").slice(1) || (() => { try { return localStorage.getItem("juvemi-tab"); } catch (e) { } })() || "ana";
 function flash(m) { $("status").textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => $("status").textContent = "", 2500); }
 
@@ -72,6 +72,8 @@ const IC = {
   sirket: '<path d="M12 3v18M5 7h14M7.5 7 4 14a3.5 3.5 0 0 0 7 0zM16.5 7 13 14a3.5 3.5 0 0 0 7 0z"/><path d="M8 21h8"/>',
   ekip: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.7-4 3.4-6.5 7-6.5s6.3 2.5 7 6.5"/>',
   ekipapp: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.5 3.2-5.5 6.5-5.5s5.9 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.6c2.6.2 4.4 2 5 5.4"/>',
+  sohbet: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.8A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>',
+  toplanti: '<rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/>',
   menu: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/>',
@@ -85,11 +87,14 @@ const APPS = [
   { id: "gorevler", ad: "Görevlerim", renk: "#3F8F5F", ik: "gorev", alt: () => { const n = (panel.gorevler || []).filter(t => t.durum !== "bitti").length; return n + " açık görev"; } },
   { id: "takvim", ad: "Takvim", renk: "#C98A1B", ik: "takvim", alt: () => { const t = bugun(), n = etk.filter(e => e.tarih >= t).length; return n ? n + " yaklaşan etkinlik" : "Ortak + kişisel"; } },
   { id: "giderler", ad: "Giderler", renk: "#C8463E", ik: "gider", alt: () => TL(giderler.reduce((s, g) => s + (+g.tutar || 0), 0)) },
+  { id: "sohbet", ad: "Sohbet", renk: "#3E7CC9", ik: "sohbet", alt: () => { const n = okunmamis(); return n ? n + " yeni mesaj" : "Ekip içi mesajlaşma"; } },
+  { id: "toplanti", ad: "Toplantı", renk: "#D06A2C", ik: "toplanti", alt: () => "Görüntülü görüşme" },
   { id: "ekip", ad: "Ekip", renk: "#2F8C8C", ik: "ekipapp", alt: () => ekip.length ? ekip.length + " kurucu ortak" : "Kurucu ortaklar" },
   { id: "butce", ad: "Bütçe & Sermaye", renk: "#7A6CB0", ik: "butce", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
 $("logo").onclick = () => go("ana");
+addEventListener("hashchange", () => { const t = location.hash.slice(1); if (t && t !== TAB) { TAB = t; renderTabs(); } });
 const narrow = () => matchMedia("(max-width:980px)").matches;
 let SIDE = (() => { try { return localStorage.getItem("juvemi-side") || ""; } catch (e) { return ""; } })();
 function applySide() { const s = $("app"); s.classList.toggle("mini", SIDE === "mini"); s.classList.toggle("wide", SIDE === "wide"); }
@@ -104,7 +109,7 @@ function renderTabs() {
   if (!mod && !app && TAB !== "ana" && mods.length) TAB = "ana";
   $("apptitle").textContent = mod ? mod.ad : (app ? app.ad : "Uygulamalar");
   $("sidenav").innerHTML = `<button type="button" class="nav-i" data-t="ana"${TAB === "ana" ? ' aria-current="page"' : ""} title="Ana ekran"><span class="si">${svg("home")}</span><span class="sl">Ana ekran</span></button>`
-    + APPS.map(x => `<button type="button" class="nav-i" data-t="${x.id}"${x.yakinda ? " disabled" : ""}${TAB === x.id ? ' aria-current="page"' : ""} title="${esc(x.ad)}"><span class="si" style="--c:${x.renk}">${svg(x.ik)}</span><span class="sl">${esc(x.ad)}</span></button>`).join("")
+    + APPS.map(x => `<button type="button" class="nav-i" data-t="${x.id}"${x.yakinda ? " disabled" : ""}${TAB === x.id ? ' aria-current="page"' : ""} title="${esc(x.ad)}"><span class="si" style="--c:${x.renk}">${svg(x.ik)}</span><span class="sl">${esc(x.ad)}</span>${x.id === "sohbet" && okunmamis() ? `<span class="nbadge">${okunmamis()}</span>` : ""}</button>`).join("")
     + (mods.length ? `<div class="side-sep">Şirket</div>` + mods.map(m => `<button type="button" class="nav-i nm" data-t="${esc(m.id)}"${TAB === m.id ? ' aria-current="page"' : ""} title="${esc(m.ad)}"><span class="si">${svg(m.id)}</span><span class="sl">${esc(m.ad)}</span></button>`).join("") : "");
   $("sidenav").querySelectorAll(".nav-i:not([disabled])").forEach(b => b.onclick = () => go(b.dataset.t));
   document.querySelectorAll(".pane").forEach(p => p.hidden = !(p.dataset.pane === TAB || (mod && p.dataset.pane === "mod")));
@@ -114,6 +119,8 @@ function renderTabs() {
   if (TAB === "takvim") renderCal();
   if (TAB === "butce") renderButce();
   if (TAB === "ekip") renderEkip();
+  if (TAB === "sohbet") { renderChat(); okundu(); }
+  if (TAB !== "toplanti" && $("meetframe").querySelector("iframe")) meetEnd();
   renderOnline();
 }
 
@@ -309,6 +316,37 @@ function renderEkip() {
 function kucult(file, S) { return new Promise((res, rej) => { const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); c.width = c.height = S; const k = Math.min(img.width, img.height), sx = (img.width - k) / 2, sy = (img.height - k) / 2; c.getContext("2d").drawImage(img, sx, sy, k, k, 0, 0, S, S); URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg", .82)); }; img.onerror = rej; img.src = URL.createObjectURL(file); }); }
 window.juvemiEkipKur = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(x => b.set(doc(db, "ekip", x.id), x.data, { merge: true })); await b.commit(); return "tamam"; };
 
+/* ---------- sohbet ---------- */
+const sonOkunan = () => { try { return +localStorage.getItem("juvemi-okundu-" + KADI) || 0; } catch (e) { return 0; } };
+function okundu() { const t = mesajlar.length ? mesajlar[mesajlar.length - 1].ts : 0; try { localStorage.setItem("juvemi-okundu-" + KADI, t); } catch (e) { } }
+function okunmamis() { const s = sonOkunan(); return mesajlar.filter(m => m.ts > s && m.kadi !== KADI).length; }
+let chatN = -1;
+function renderChat() {
+  const el = $("chatlist"), alt = el.scrollHeight - el.scrollTop - el.clientHeight < 80 || chatN < 0;
+  if (!mesajlar.length) { el.innerHTML = '<div class="empty">Henüz mesaj yok. İlk mesajı sen yaz.</div>'; chatN = 0; return; }
+  let son = "";
+  el.innerHTML = mesajlar.map(m => { const d = new Date(m.ts), g = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" }), kisi = ekip.find(x => x.id === m.kadi) || { ad: m.ad || m.kadi };
+    const sep = g !== son ? `<div class="daysep">${esc(g)}</div>` : ""; son = g;
+    return sep + `<div class="msg${m.kadi === KADI ? " me" : ""}"><span class="ou">${kisi.foto ? `<img src="${esc(kisi.foto)}" alt="">` : esc(ini(kisi.ad))}</span><div class="bub">${m.kadi === KADI ? "" : `<b>${esc((kisi.ad || "").split(" ")[0])}</b>`}<p>${esc(m.metin)}</p><time>${d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time></div></div>`; }).join("");
+  if (alt || mesajlar.length !== chatN && mesajlar[mesajlar.length - 1].kadi === KADI) el.scrollTop = el.scrollHeight; chatN = mesajlar.length;
+}
+function gonder() { const v = $("chattext").value.trim(); if (!v) return; $("chattext").value = ""; $("chattext").style.height = "";
+  addDoc(collection(db, "mesajlar"), { metin: v, kadi: KADI, ad: MYNAME, ts: Date.now() }).catch(() => { flash("Gönderilemedi"); $("chattext").value = v; }); }
+$("chatform").onsubmit = e => { e.preventDefault(); gonder(); };
+$("chattext").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); gonder(); } });
+$("chattext").addEventListener("input", e => { const t = e.target; t.style.height = "auto"; t.style.height = Math.min(140, t.scrollHeight) + "px"; });
+
+/* ---------- toplantı ---------- */
+const ODA = "JuvemiEkipOdasi-7k3q9";
+$("meetroom").textContent = "meet.jit.si/" + ODA; $("meetnew").href = "https://meet.jit.si/" + ODA;
+function meetEnd() { $("meetframe").innerHTML = '<div class="empty">Toplantıdan ayrıldın. Tekrar katılmak için "Toplantıya katıl"a bas.</div>'; $("meetend").hidden = true; $("meetstart").hidden = false; }
+$("meetstart").onclick = () => {
+  const url = "https://meet.jit.si/" + ODA + "#userInfo.displayName=%22" + encodeURIComponent(MYNAME) + "%22&config.prejoinConfig.enabled=true&config.disableDeepLinking=true&interfaceConfig.SHOW_PROMOTIONAL_CLOSE_PAGE=false";
+  $("meetframe").innerHTML = `<iframe src="${url}" allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write" allowfullscreen title="Juvémi toplantı"></iframe>`;
+  $("meetstart").hidden = true; $("meetend").hidden = false;
+};
+$("meetend").onclick = meetEnd;
+
 /* ---------- çevrimiçi ---------- */
 function renderOnline() {
   const el = $("online"); if (!el || !ekip.length) return; const now = Date.now();
@@ -353,6 +391,7 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "giderler"), orderBy("tarih", "desc")), s => { giderler = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderGider(); renderGenel(); renderTabs(); }, () => flash("Giderler okunamadı")));
   unsub.push(onSnapshot(query(collection(db, "etkinlikler"), orderBy("tarih")), s => { etk = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "sermaye"), orderBy("tarih", "desc")), s => { sermaye = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
+  unsub.push(onSnapshot(query(collection(db, "mesajlar"), orderBy("ts", "desc"), limit(300)), s => { mesajlar = s.docs.map(d => d.data()).reverse(); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "durum"), s => { durum = {}; s.docs.forEach(d => durum[d.id] = d.data()); renderOnline(); }));
   unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
