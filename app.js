@@ -445,25 +445,52 @@ $("tp-drivedeg").onclick = () => { const f = $("tp-drivedeg"); if (f.dataset.on)
 window.juvemiToplu = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(([c, i, d]) => b.set(i ? doc(db, c, i) : doc(collection(db, c)), d, { merge: true })); await b.commit(); return "tamam " + L.length; };
 window.juvemiYaz = async (col, id, data) => { if (!ME) throw new Error("önce giriş yap"); if (id) await setDoc(doc(db, col, id), data, { merge: true }); else await addDoc(collection(db, col), data); return "tamam"; };
 
-/* ---------- sohbet ---------- */
-const sonOkunan = () => { try { return +localStorage.getItem("juvemi-okundu-" + KADI) || 0; } catch (e) { return 0; } };
-function okundu() { const t = mesajlar.length ? mesajlar[mesajlar.length - 1].ts : 0; try { localStorage.setItem("juvemi-okundu-" + KADI, t); } catch (e) { } }
-function okunmamis() { const s = sonOkunan(); return mesajlar.filter(m => m.ts > s && m.kadi !== KADI).length; }
-let chatN = -1;
+/* ---------- sohbet (kanallar) ---------- */
+let KANAL = (() => { try { return localStorage.getItem("juvemi-kanal") || "genel"; } catch (e) { return "genel"; } })(), kanallar = [];
+const kanalOf = m => m.kanal || "genel";
+const okKey = k => "juvemi-ok-" + KADI + "-" + k;
+const sonOkunan = (k = KANAL) => { try { return +localStorage.getItem(okKey(k)) || (k === "genel" ? +localStorage.getItem("juvemi-okundu-" + KADI) || 0 : 0); } catch (e) { return 0; } };
+function benimKanallar() { return kanallar.filter(k => !k.uyeler || !k.uyeler.length || k.uyeler.includes(KADI)); }
+function okundu() { const L = mesajlar.filter(m => kanalOf(m) === KANAL), t = L.length ? L[L.length - 1].ts : 0; try { localStorage.setItem(okKey(KANAL), t); } catch (e) { } }
+function okunmamis(k) { const ks = k ? [k] : benimKanallar().map(x => x.id); return mesajlar.filter(m => ks.includes(kanalOf(m)) && m.ts > sonOkunan(kanalOf(m)) && m.kadi !== KADI).length; }
+function linkle(t) { return esc(t).replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.length > 60 ? u.slice(0, 57) + "…" : u}</a>`); }
+function dosyaTur(u, ad) { const s = (ad || u).toLowerCase(); if (/docs\.google\.com\/document/.test(u)) return "DOC"; if (/spreadsheets/.test(u)) return "XLS"; if (/presentation/.test(u)) return "PPT"; if (/folders/.test(u)) return "KLS"; const m = s.match(/\.([a-z0-9]{2,4})(\?|$)/); return m ? m[1].toUpperCase() : "DOSYA"; }
+let chatN = -1, chatK = "";
 function renderChat() {
-  const el = $("chatlist"), alt = el.scrollHeight - el.scrollTop - el.clientHeight < 80 || chatN < 0;
-  if (!mesajlar.length) { el.innerHTML = '<div class="empty">Henüz mesaj yok. İlk mesajı sen yaz.</div>'; chatN = 0; return; }
+  const B = benimKanallar(); if (B.length && !B.some(k => k.id === KANAL)) KANAL = B[0].id;
+  const K = kanallar.find(k => k.id === KANAL) || { id: "genel", ad: "genel" };
+  $("klist").innerHTML = B.map(k => { const n = k.id === KANAL ? 0 : okunmamis(k.id); return `<button type="button" class="ki${n ? " un" : ""}" data-k="${esc(k.id)}" aria-current="${k.id === KANAL}"># ${esc(k.ad || k.id)}${n ? `<span class="nbadge">${n}</span>` : ""}</button>`; }).join("") || '<div class="muted" style="padding:6px">Kanal yok</div>';
+  $("klist").querySelectorAll(".ki").forEach(b => b.onclick = () => { KANAL = b.dataset.k; try { localStorage.setItem("juvemi-kanal", KANAL); } catch (e) { } chatN = -1; renderTabs(); });
+  $("k-ad").textContent = "# " + (K.ad || K.id); $("k-konu").textContent = K.konu || "";
+  const uy = (K.uyeler && K.uyeler.length ? K.uyeler : ORTAKLAR.map(o => o[0]));
+  $("k-uyeler").innerHTML = uy.map(id => { const m = ekip.find(x => x.id === id) || { ad: id }; return `<span class="ou" title="${esc(m.ad)}">${m.foto ? `<img src="${esc(m.foto)}" alt="">` : esc(ini(m.ad))}</span>`; }).join("");
+  const kl = lnk(K.klasor); $("k-drive").href = kl || "#"; $("k-drive").style.display = kl ? "" : "none"; $("dosyaekle").style.display = kl ? "" : "none";
+  const el = $("chatlist"), L = mesajlar.filter(m => kanalOf(m) === KANAL), alt = chatK !== KANAL || el.scrollHeight - el.scrollTop - el.clientHeight < 80 || chatN < 0;
+  if (!L.length) { el.innerHTML = `<div class="empty"># ${esc(K.ad || K.id)} kanalında henüz mesaj yok. İlk mesajı sen yaz.</div>`; chatN = 0; chatK = KANAL; return; }
   let son = "";
-  el.innerHTML = mesajlar.map(m => { const d = new Date(m.ts), g = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" }), kisi = ekip.find(x => x.id === m.kadi) || { ad: m.ad || m.kadi };
+  el.innerHTML = L.map(m => { const d = new Date(m.ts), g = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" }), kisi = ekip.find(x => x.id === m.kadi) || { ad: m.ad || m.kadi };
     const sep = g !== son ? `<div class="daysep">${esc(g)}</div>` : ""; son = g;
-    return sep + `<div class="msg${m.kadi === KADI ? " me" : ""}"><span class="ou">${kisi.foto ? `<img src="${esc(kisi.foto)}" alt="">` : esc(ini(kisi.ad))}</span><div class="bub">${m.kadi === KADI ? "" : `<b>${esc((kisi.ad || "").split(" ")[0])}</b>`}<p>${esc(m.metin)}</p><time>${d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time></div></div>`; }).join("");
-  if (alt || mesajlar.length !== chatN && mesajlar[mesajlar.length - 1].kadi === KADI) el.scrollTop = el.scrollHeight; chatN = mesajlar.length;
+    const govde = m.tur === "dosya" ? `${m.metin ? `<p>${linkle(m.metin)}</p>` : ""}<a class="file" href="${esc(lnk(m.url) || "#")}" target="_blank" rel="noopener"><i>${esc(dosyaTur(m.url, m.dosyaAd))}</i><span style="min-width:0"><b>${esc(m.dosyaAd || "Drive dosyası")}</b><span>Google Drive'da aç</span></span></a>` : `<p>${linkle(m.metin)}</p>`;
+    return sep + `<div class="msg${m.kadi === KADI ? " me" : ""}"><span class="ou">${kisi.foto ? `<img src="${esc(kisi.foto)}" alt="">` : esc(ini(kisi.ad))}</span><div class="bub">${m.kadi === KADI ? "" : `<b>${esc((kisi.ad || "").split(" ")[0])}</b>`}${govde}<time>${d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time></div></div>`; }).join("");
+  if (alt || L.length !== chatN && L[L.length - 1].kadi === KADI) el.scrollTop = el.scrollHeight; chatN = L.length; chatK = KANAL;
 }
 function gonder() { const v = $("chattext").value.trim(); if (!v) return; $("chattext").value = ""; $("chattext").style.height = "";
-  addDoc(collection(db, "mesajlar"), { metin: v, kadi: KADI, ad: MYNAME, ts: Date.now() }).catch(() => { flash("Gönderilemedi"); $("chattext").value = v; }); }
+  addDoc(collection(db, "mesajlar"), { metin: v, kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() }).catch(() => { flash("Gönderilemedi"); $("chattext").value = v; }); }
 $("chatform").onsubmit = e => { e.preventDefault(); gonder(); };
 $("chattext").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); gonder(); } });
 $("chattext").addEventListener("input", e => { const t = e.target; t.style.height = "auto"; t.style.height = Math.min(140, t.scrollHeight) + "px"; });
+$("dosyaekle").onclick = () => { const K = kanallar.find(k => k.id === KANAL); if (K && lnk(K.klasor)) window.open(K.klasor, "_blank", "noopener"); $("dosyabar").hidden = false; $("dosyalink").focus(); };
+$("dosyakapat").onclick = () => { $("dosyabar").hidden = true; };
+$("dosyagonder").onclick = () => { const u = $("dosyalink").value.trim(); if (!lnk(u)) { flash("Geçerli bir Drive bağlantısı yapıştır"); return; }
+  addDoc(collection(db, "mesajlar"), { tur: "dosya", url: u, dosyaAd: $("dosyaad").value.trim(), metin: $("chattext").value.trim(), kadi: KADI, ad: MYNAME, kanal: KANAL, ts: Date.now() })
+    .then(() => { $("dosyalink").value = ""; $("dosyaad").value = ""; $("chattext").value = ""; $("dosyabar").hidden = true; flash("Dosya paylaşıldı"); }).catch(() => flash("Paylaşılamadı")); };
+$("k-yeni").onclick = () => { $("kf-uye").innerHTML = ORTAKLAR.map(([k, ad]) => `<label><input type="checkbox" value="${k}" checked> ${ad}</label>`).join(""); $("k-form").hidden = false; $("kf-ad").focus(); };
+$("kf-iptal").onclick = () => { $("k-form").hidden = true; };
+$("k-form").onsubmit = e => { e.preventDefault(); const ad = $("kf-ad").value.trim().toLocaleLowerCase("tr-TR").replace(/[^a-z0-9çğıöşü-]+/g, "-").replace(/^-+|-+$/g, ""); if (!ad) return;
+  const uyeler = [...$("kf-uye").querySelectorAll("input:checked")].map(i => i.value); if (!uyeler.includes(KADI)) uyeler.push(KADI);
+  const anaK = kanallar.find(k => k.id === "genel");
+  setDoc(doc(db, "kanallar", ad), { ad, konu: $("kf-acik").value.trim(), uyeler, sira: 100 + kanallar.length, klasor: (anaK && anaK.ust) || "", olusturan: MYNAME, ts: Date.now() })
+    .then(() => { $("k-form").hidden = true; $("kf-ad").value = ""; $("kf-acik").value = ""; KANAL = ad; renderTabs(); flash("Kanal oluşturuldu"); }).catch(() => flash("Oluşturulamadı")); };
 
 /* ---------- toplantı ---------- */
 const ODA = "JuvemiEkipOdasi-7k3q9";
@@ -523,7 +550,8 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "haftalar"), orderBy("baslangic")), s => { haftalar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "yolharitasi"), s => { yol = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "toplantilar"), orderBy("tarih", "desc")), s => { toplantilar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
-  unsub.push(onSnapshot(query(collection(db, "mesajlar"), orderBy("ts", "desc"), limit(300)), s => { mesajlar = s.docs.map(d => d.data()).reverse(); renderTabs(); }));
+  unsub.push(onSnapshot(query(collection(db, "kanallar"), orderBy("sira")), s => { kanallar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
+  unsub.push(onSnapshot(query(collection(db, "mesajlar"), orderBy("ts", "desc"), limit(500)), s => { mesajlar = s.docs.map(d => d.data()).reverse(); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "durum"), s => { durum = {}; s.docs.forEach(d => durum[d.id] = d.data()); renderOnline(); }));
   unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
