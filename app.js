@@ -58,6 +58,7 @@ onAuthStateChanged(auth, u => {
 });
 
 const IC = {
+  geri: '<path d="M4 5h16v11H9l-5 4z"/><path d="M9 9h6M9 12h4"/>',
   home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
   pano: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   gorev: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/>',
@@ -98,6 +99,7 @@ const APPS = [
   { id: "toplanti", ad: "Görüntülü Görüşme", renk: "#D06A2C", ik: "toplanti", alt: () => "Jitsi ekip odası" },
   { id: "ekip", ad: "Ekip", renk: "#2F8C8C", ik: "ekipapp", alt: () => ekip.length ? ekip.length + " kurucu ortak" : "Kurucu ortaklar" },
   { id: "butce", ad: "Bütçe & Sermaye", renk: "#7A6CB0", ik: "butce", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } },
+  { id: "geri", ad: "Geri Bildirim", renk: "#B5527A", ik: "geri", alt: () => { const n = geri.filter(x => (x.durum || "yeni") === "yeni").length; return n ? n + " yeni kayıt" : "Talepler, öneriler, hatalar"; } },
   { id: "ayarlar", ad: "Ayarlar", renk: "#6B7280", ik: "ayar", sadece: "mustafa", alt: () => ST_SON ? "Depolama %" + ST_SON.pct.toFixed(3) : "Depolama ve sınırlar" }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
@@ -130,6 +132,7 @@ function renderTabs() {
   if (TAB === "ekip") renderEkip();
   if (TAB === "toplantilar") renderTp();
   if (TAB === "yol") renderYol();
+  if (TAB === "geri") renderGeri();
   if (TAB === "ayarlar" && KADI === "mustafa" && !ST_SON && !ST_YUK) hesapla();
   renderUpl();
   if (TAB === "sohbet") { renderChat(); okundu(); }
@@ -374,7 +377,7 @@ function kucult(file, S) { return new Promise((res, rej) => { const img = new Im
 window.juvemiEkipKur = async L => { if (!ME) throw new Error("önce giriş yap"); const b = writeBatch(db); L.forEach(x => b.set(doc(db, "ekip", x.id), x.data, { merge: true })); await b.commit(); return "tamam"; };
 
 /* ---------- ayarlar (sadece mustafa) ---------- */
-const KOL = [["ortak", "Özet ve netleşenler"], ["moduller", "Şirket alanları"], ["giderler", "Giderler"], ["sermaye", "Sermaye"], ["butce", "Aylık bütçe"], ["gunluk", "Ekip günlüğü"], ["mesajlar", "Sohbet mesajları"], ["etkinlikler", "Takvim etkinlikleri"], ["ekip", "Ekip profilleri (fotoğraflar)"], ["toplantilar", "Toplantı kayıtları"], ["yolharitasi", "Yol haritası"], ["haftalar", "Haftalık klasörler"], ["durum", "Çevrimiçi durumu"]];
+const KOL = [["ortak", "Özet ve netleşenler"], ["moduller", "Şirket alanları"], ["giderler", "Giderler"], ["sermaye", "Sermaye"], ["butce", "Aylık bütçe"], ["gunluk", "Ekip günlüğü"], ["mesajlar", "Sohbet mesajları"], ["etkinlikler", "Takvim etkinlikleri"], ["ekip", "Ekip profilleri (fotoğraflar)"], ["toplantilar", "Toplantı kayıtları"], ["yolharitasi", "Yol haritası"], ["haftalar", "Haftalık klasörler"], ["durum", "Çevrimiçi durumu"], ["geribildirim", "Geri bildirimler"]];
 const GIB = 1024 ** 3;
 const boyutYaz = b => b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : (b / 1048576).toFixed(2) + " MB";
 const dokBoyut = (col, id, data) => new TextEncoder().encode(JSON.stringify(data)).length + col.length + id.length + 48;
@@ -414,6 +417,48 @@ function renderUpl() {
 const FAZLAR = [["f1", "Faz 1 · Dijital başlangıç", "Ekim 2026 – Ocak 2027"], ["f2", "Faz 2 · Aylık abonelik kutusu", "Şubat – Haziran 2027"], ["f3", "Faz 3 · Büyüme", "Temmuz 2027 ve sonrası"]];
 const YDL = { acik: "Planlandı", devam: "Sürüyor", bitti: "Tamamlandı" };
 $("yf-faz").innerHTML = FAZLAR.map(f => `<option value="${f[0]}">${f[1]}</option>`).join("");
+/* ---------- geri bildirim ---------- */
+let geri = [], GTUR = "hepsi", GDUR = "acik", GACIK = null;
+const GT = { talep: ["Talep", "🙋"], oneri: ["Öneri", "💡"], hata: ["Hata", "🐞"], diger: ["Diğer", "💬"] };
+const GD = { yeni: "Yeni", inceleniyor: "İnceleniyor", yapiliyor: "Yapılıyor", tamam: "Tamamlandı", red: "Yapılmayacak" };
+const GDS = ["yeni", "inceleniyor", "yapiliyor", "tamam", "red"];
+const YON = () => KADI === "mustafa";
+function renderGeri() {
+  const say = t => geri.filter(x => t === "hepsi" || x.tur === t).length;
+  $("g-sekme").innerHTML = [["hepsi", "Tümü", "📋"]].concat(Object.entries(GT).map(([k, v]) => [k, { talep: "Talepler", oneri: "Öneriler", hata: "Hatalar", diger: "Diğer" }[k], v[1]])).map(([k, ad, e]) => `<button type="button" data-t="${k}" class="${GTUR === k ? "on" : ""}">${e} ${ad}<span>${say(k)}</span></button>`).join("");
+  $("g-sekme").querySelectorAll("button").forEach(b => b.onclick = () => { GTUR = b.dataset.t; renderGeri(); });
+  $("g-filtre").querySelectorAll("button").forEach(b => { b.classList.toggle("on", b.dataset.d === GDUR); b.onclick = () => { GDUR = b.dataset.d; renderGeri(); }; });
+  let L = geri.filter(x => GTUR === "hepsi" || x.tur === GTUR);
+  if (GDUR === "acik") L = L.filter(x => !["tamam", "red"].includes(x.durum || "yeni")); else if (GDUR === "kapali") L = L.filter(x => ["tamam", "red"].includes(x.durum));
+  else if (GDUR === "benim") L = L.filter(x => x.kadi === KADI);
+  L.sort((p, q) => (q.oy || []).length - (p.oy || []).length || q.ts - p.ts);
+  const el = $("g-liste");
+  if (!L.length) { el.innerHTML = `<div class="empty">Burada kayıt yok. Yukarıdan yeni bir ${GTUR === "hepsi" ? "talep ya da öneri" : GT[GTUR][0].toLowerCase()} yaz.</div>`; return; }
+  el.innerHTML = L.map(x => { const d = x.durum || "yeni", oy = x.oy || [], ben = oy.includes(KADI), ac = GACIK === x.id;
+    return `<article class="gk ${ac ? "ac" : ""}" data-id="${esc(x.id)}">
+    <button type="button" class="g-oy ${ben ? "on" : ""}" title="Ben de istiyorum">▲<b>${oy.length}</b></button>
+    <div class="g-ic"><div class="g-ust"><span class="g-tur g-${esc(x.tur)}">${GT[x.tur] ? GT[x.tur][1] + " " + GT[x.tur][0] : ""}</span>${x.oncelik === "yuksek" ? '<span class="g-acil">Acil</span>' : ""}<span class="g-dur d-${d}">${GD[d]}</span></div>
+    <div class="g-bas">${esc(x.baslik)}</div>${x.aciklama ? `<div class="g-acik">${esc(x.aciklama).replace(/\n/g, "<br>")}</div>` : ""}
+    <div class="g-alt">${esc(x.ad || x.kadi)} · ${new Date(x.ts).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}${(x.yorumlar || []).length ? ` · 💬 ${x.yorumlar.length}` : ""}</div>
+    ${x.yanit ? `<div class="g-yanit"><b>Mustafa'nın yanıtı</b>${esc(x.yanit).replace(/\n/g, "<br>")}</div>` : ""}
+    ${ac ? `<div class="g-detay">${(x.yorumlar || []).map(y => `<div class="g-yorum"><b>${esc(y.ad)}</b> ${esc(y.metin)}<span>${new Date(y.ts).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span></div>`).join("")}
+      <form class="g-yf"><input placeholder="Yorum yaz…" maxlength="500"><button class="btn">Gönder</button></form>
+      ${YON() ? `<div class="g-yon"><label>Durum<select class="g-ds">${GDS.map(k => `<option value="${k}" ${k === d ? "selected" : ""}>${GD[k]}</option>`).join("")}</select></label><label style="flex:1">Yanıtın<textarea class="g-yt" rows="2" placeholder="Ne yaptığını / ne zaman yapılacağını yaz">${esc(x.yanit || "")}</textarea></label><button type="button" class="btn g-ykay">Kaydet</button></div>` : ""}
+      ${YON() || x.kadi === KADI ? `<button type="button" class="del g-sil">Sil</button>` : ""}</div>` : ""}
+    </div></article>`; }).join("");
+  el.querySelectorAll(".gk").forEach(k => { const id = k.dataset.id, x = geri.find(z => z.id === id);
+    k.querySelector(".g-ic").onclick = e => { if (e.target.closest("form,select,textarea,button,input")) return; GACIK = GACIK === id ? null : id; renderGeri(); };
+    k.querySelector(".g-oy").onclick = () => { const o = new Set(x.oy || []); o.has(KADI) ? o.delete(KADI) : o.add(KADI); setDoc(doc(db, "geribildirim", id), { oy: [...o] }, { merge: true }).catch(() => flash("Kaydedilemedi")); };
+    const yf = k.querySelector(".g-yf"); if (yf) yf.onsubmit = e => { e.preventDefault(); const v = yf.querySelector("input").value.trim(); if (!v) return; setDoc(doc(db, "geribildirim", id), { yorumlar: (x.yorumlar || []).concat({ kadi: KADI, ad: MYNAME, metin: v, ts: Date.now() }) }, { merge: true }).catch(() => flash("Gönderilemedi")); };
+    const yk = k.querySelector(".g-ykay"); if (yk) yk.onclick = () => setDoc(doc(db, "geribildirim", id), { durum: k.querySelector(".g-ds").value, yanit: k.querySelector(".g-yt").value.trim(), guncel: Date.now() }, { merge: true }).then(() => flash("Kaydedildi")).catch(() => flash("Kaydedilemedi"));
+    const sl = k.querySelector(".g-sil"); if (sl) sl.onclick = () => { if (!sl.classList.contains("sure")) { sl.classList.add("sure"); sl.textContent = "Emin misin? Tekrar tıkla"; return; } deleteDoc(doc(db, "geribildirim", id)).then(() => flash("Silindi")); };
+  });
+}
+$("g-yeni").onclick = () => { $("g-form").hidden = !$("g-form").hidden; if (!$("g-form").hidden) { if (GTUR !== "hepsi") $("gf-tur").value = GTUR; $("gf-bas").focus(); } };
+$("gf-iptal").onclick = () => { $("g-form").hidden = true; };
+$("g-form").onsubmit = e => { e.preventDefault(); const b = $("gf-bas").value.trim(); if (!b) return;
+  addDoc(collection(db, "geribildirim"), { tur: $("gf-tur").value, oncelik: $("gf-onc").value, baslik: b, aciklama: $("gf-acik").value.trim(), kadi: KADI, ad: MYNAME, ts: Date.now(), durum: "yeni", oy: [KADI], yorumlar: [] })
+    .then(() => { $("g-form").reset(); $("g-form").hidden = true; flash("Gönderildi"); }).catch(() => flash("Gönderilemedi")); };
 function renderYol() {
   if ($("yh-form").contains(document.activeElement)) return;
   const el = $("yh"); if (!yol.length) { el.innerHTML = '<div class="empty">Henüz hedef yok.</div>'; return; }
@@ -667,6 +712,7 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "etkinlikler"), orderBy("tarih")), s => { etk = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "sermaye"), orderBy("tarih", "desc")), s => { sermaye = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "haftalar"), orderBy("baslangic")), s => { haftalar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
+  unsub.push(onSnapshot(query(collection(db, "geribildirim"), orderBy("ts", "desc")), s => { geri = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "yolharitasi"), s => { yol = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "toplantilar"), orderBy("tarih", "desc")), s => { toplantilar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "kanallar"), orderBy("sira")), s => { kanallar = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));

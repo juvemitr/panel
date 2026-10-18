@@ -54,6 +54,17 @@ body.suruklen,body.suruklen *{cursor:grabbing!important}
 .task .ed{outline:none;border-radius:6px;padding:1px 5px;margin-left:-5px;cursor:text}.task .ed:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}.task .ed:focus{background:var(--surface);box-shadow:0 0 0 1.5px var(--mustard)}
 .task .ed:empty::before{content:attr(data-ph);color:var(--muted);opacity:.7}.task .desc.ed:empty{font-size:13px}
 .task .note{border:1px dashed var(--line);background:transparent;resize:none;overflow:hidden}.task .note:focus{border-style:solid;border-color:var(--mustard);outline:none}
+.g-sekme{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:14px 0 10px}.g-sekme button{border:0;background:none;color:var(--muted);font:inherit;font-weight:600;font-size:14px;padding:9px 12px;border-bottom:2.5px solid transparent;margin-bottom:-1px;cursor:pointer}.g-sekme button.on{color:var(--ink);border-color:#B5527A}.g-sekme span{margin-left:6px;font-size:11px;background:var(--line);border-radius:99px;padding:1px 7px}
+.g-filtre{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.g-filtre button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:99px;padding:4px 12px;font:inherit;font-size:12.5px;cursor:pointer}.g-filtre button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.g-liste{display:grid;gap:10px}.gk{display:flex;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}.gk.ac{box-shadow:var(--shadow-h)}
+.g-oy{flex:none;width:46px;height:52px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px}.g-oy b{font-size:15px;color:var(--ink)}.g-oy.on{border-color:#B5527A;color:#B5527A;background:color-mix(in srgb,#B5527A 10%,transparent)}
+.g-ic{flex:1;min-width:0;cursor:pointer}.g-ust{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px}.g-tur,.g-dur,.g-acil{font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 9px;background:var(--line);color:var(--ink)}
+.g-acil{background:#C8463E;color:#fff}.g-dur{margin-left:auto}.d-yeni{background:color-mix(in srgb,#3E7CC9 18%,transparent);color:#3E7CC9}.d-inceleniyor{background:color-mix(in srgb,#C98A1B 20%,transparent);color:#B07812}.d-yapiliyor{background:color-mix(in srgb,#7A6CB0 20%,transparent);color:#7A6CB0}.d-tamam{background:color-mix(in srgb,#3F8F5F 20%,transparent);color:#3F8F5F}.d-red{background:var(--line);color:var(--muted)}
+.g-bas{font-weight:700;font-size:15.5px;overflow-wrap:anywhere}.g-acik{color:var(--muted);font-size:14px;margin-top:3px;overflow-wrap:anywhere}.g-alt{font-size:12px;color:var(--muted);margin-top:6px}
+.g-yanit{margin-top:8px;border-left:3px solid var(--mustard);background:color-mix(in srgb,var(--mustard) 9%,transparent);border-radius:0 8px 8px 0;padding:7px 10px;font-size:14px}.g-yanit b{display:block;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.g-detay{margin-top:10px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px;cursor:auto}.g-yorum{font-size:14px}.g-yorum span{color:var(--muted);font-size:11.5px;margin-left:6px}
+.g-yf{display:flex;gap:6px}.g-yf input{flex:1}.g-yon{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:var(--bg);border-radius:10px;padding:10px}.g-yon label{display:grid;gap:4px;font-size:12px;color:var(--muted)}.g-sil{justify-self:start}
+@media (max-width:560px){.gk{gap:10px;padding:12px}.g-oy{width:40px}}
 .task.done{opacity:.65}.task.dragging{opacity:.4}.task.over-top{box-shadow:0 -3px 0 var(--mustard)}.task.over-bot{box-shadow:0 3px 0 var(--mustard)}
 .num{font-family:var(--display);font-weight:700;font-size:22px;color:var(--slate);line-height:1.1;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center}
 .num small{font:700 11px var(--body);color:var(--muted)}
@@ -560,6 +571,17 @@ el.onclick=bit;setTimeout(bit,4200)})();</script></div>
     </form>
     <section class="yh" id="yh"><div class="empty">Yol haritası yükleniyor…</div></section>
   </div>
+  <div class="pane" data-pane="geri">
+    <section class="tp-top"><div><b>Geri bildirim</b><div class="muted">Panel ve şirket için talep, öneri ya da hata bildir. Mustafa durumunu günceller ve yanıtlar; ▲ ile "ben de istiyorum" de.</div></div><button type="button" class="btn dark" id="g-yeni">+ Yeni yaz</button></section>
+    <form class="card tp-form" id="g-form" hidden>
+      <div class="tp-g" style="grid-template-columns:1fr 1fr"><label>Tür<select id="gf-tur"><option value="talep">🙋 Talep</option><option value="oneri">💡 Öneri</option><option value="hata">🐞 Hata</option><option value="diger">💬 Diğer</option></select></label><label>Öncelik<select id="gf-onc"><option value="normal">Normal</option><option value="yuksek">Acil</option></select></label></div>
+      <label>Başlık<input id="gf-bas" required maxlength="140" placeholder="Kısaca ne istiyorsun?"></label><label>Ayrıntı<textarea id="gf-acik" rows="3" placeholder="Nerede, nasıl olsun, neden önemli…"></textarea></label>
+      <div style="display:flex;gap:8px"><button class="btn">Gönder</button><button type="button" class="btn dark" id="gf-iptal">Vazgeç</button></div>
+    </form>
+    <nav class="g-sekme" id="g-sekme"></nav>
+    <div class="g-filtre" id="g-filtre"><button type="button" data-d="acik">Açık</button><button type="button" data-d="kapali">Kapanan</button><button type="button" data-d="benim">Benimkiler</button><button type="button" data-d="hepsi">Hepsi</button></div>
+    <section class="g-liste" id="g-liste"><div class="empty">Yükleniyor…</div></section>
+  </div>
   <div class="pane" data-pane="ayarlar">
     <section class="card st-hero">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0 0 6px">Veritabanı depolama · ücretsiz plan</h2><div class="big" id="st-used">—</div><div class="muted" id="st-sub">Hesaplanıyor…</div></div><button type="button" class="btn dark" id="st-yenile">Yeniden hesapla</button></div>
@@ -620,6 +642,6 @@ el.onclick=bit;setTimeout(bit,4200)})();</script></div>
 </div>
 </div>
 
-<script>window.JV="20261018132358";</script>
-<script type="module" src="app.js?v=20261018132358"></script>
+<script>window.JV="20261018132954";</script>
+<script type="module" src="app.js?v=20261018132954"></script>
 </body></html>
