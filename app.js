@@ -198,13 +198,18 @@ function savePanel() { setTimeout(renderTabs, 0); setDoc(doc(db, "kullanicilar",
 function altHTML(t) {
   const A = t.altlar || [], y = A.filter(x => x.ok).length, yz = A.length ? Math.round(100 * y / A.length) : 0;
   return `<div class="alt">${A.length ? `<div class="alt-ust"><span>Alt işler</span><b>${y} / ${A.length}</b><div class="alt-bar"><i style="width:${yz}%"></i></div><em>%${yz}</em></div>` : ""}
-  <ul>${A.map(x => `<li class="${x.ok ? "ok" : ""}" data-a="${esc(x.id)}"><label><input type="checkbox" ${x.ok ? "checked" : ""}><span>${esc(x.ad)}</span></label><button type="button" class="alt-sil" title="Sil">✕</button></li>`).join("")}</ul>
+  <ul>${A.map(x => `<li class="${x.ok ? "ok" : ""}" data-a="${esc(x.id)}"><input type="checkbox" ${x.ok ? "checked" : ""}><span class="alt-ad" contenteditable="true" spellcheck="false" title="Düzenlemek için tıkla">${esc(x.ad)}</span><button type="button" class="alt-duz" title="Düzenle">✎</button><button type="button" class="alt-sil" title="Sil">✕</button></li>`).join("")}</ul>
   <form class="alt-ekle"><input type="text" placeholder="+ Alt iş ekle" maxlength="140"><button type="submit">Ekle</button></form></div>`;
 }
 function altBagla(c, t) {
   c.querySelectorAll(".alt li").forEach(li => {
     const x = (t.altlar || []).find(z => z.id === li.dataset.a); if (!x) return;
     li.querySelector("input").onchange = e => { x.ok = e.target.checked; if (t.altlar.length && t.altlar.every(z => z.ok) && t.durum !== "bitti") t.durum = "bitti"; else if (!x.ok && t.durum === "bitti") t.durum = "devam"; else if (x.ok && (t.durum || "acik") === "acik") t.durum = "devam"; savePanel(); };
+    const ad = li.querySelector(".alt-ad");
+    li.querySelector(".alt-duz").onclick = () => { ad.focus(); const r = document.createRange(); r.selectNodeContents(ad); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    ad.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); ad.blur(); } if (e.key === "Escape") { ad.textContent = x.ad; ad.blur(); } };
+    ad.onpaste = e => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain").replace(/\s+/g, " ")); };
+    ad.onblur = () => { const v = ad.textContent.trim(); if (!v) { ad.textContent = x.ad; return; } if (v !== x.ad) { x.ad = v; savePanel(); } };
     li.querySelector(".alt-sil").onclick = () => { t.altlar = t.altlar.filter(z => z !== x); savePanel(); };
   });
   const f = c.querySelector(".alt-ekle"), inp = f.querySelector("input");
@@ -226,7 +231,7 @@ function renderTasks() {
     const ta = c.querySelector("textarea"); ta.onchange = () => { t.not = ta.value; savePanel(); };
     const del = c.querySelector(".del"); del.onclick = () => { if (!del.classList.contains("sure")) { del.classList.add("sure"); del.textContent = "Emin misin? Silmek için tekrar tıkla"; setTimeout(() => { del.classList.remove("sure"); del.textContent = "Sil"; }, 4000); return; } panel.gorevler = panel.gorevler.filter(x => x.id !== t.id); savePanel(); };
     c.onpointerdown = e => {
-      if (e.button > 0 || e.target.closest("input,textarea,button,a")) return;
+      if (e.button > 0 || e.target.closest("input,textarea,button,a,[contenteditable]")) return;
       if (e.pointerType !== "mouse" && !e.target.closest(".num")) return;
       e.preventDefault(); const y0 = e.clientY, x0 = e.clientX; let basladi = false, hayalet = null, dx = 0, dy = 0;
       const bas = () => {
@@ -663,5 +668,5 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "gunluk"), orderBy("ts", "desc")), s => { gunluk = s.docs.map(d => d.data()); renderGenel(); }));
-  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && (document.activeElement.tagName === "TEXTAREA" || (document.activeElement.closest(".alt-ekle") && document.activeElement.value)))) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
+  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && (document.activeElement.tagName === "TEXTAREA" || (document.activeElement.closest(".alt-ekle") && document.activeElement.value) || document.activeElement.classList.contains("alt-ad")))) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
 }
