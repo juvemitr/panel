@@ -482,16 +482,57 @@ $("yh-form").onsubmit = e => { e.preventDefault(); const d = { faz: $("yf-faz").
 /* ---------- toplantılar ---------- */
 const ORTAKLAR = [["mustafa", "Mustafa"], ["fatmanur", "Fatma Nur"], ["rumeysa", "Rumeysa"]];
 const lnk = u => /^https?:\/\//.test(u || "") ? u : "";
+/* ---------- kurumsal rapor ---------- */
+let RPID = null;
+const LOGO2 = 'Juvé<span class="m">m</span><span class="i">i</span>';
+function yayinla(id) { setDoc(doc(db, "toplantilar", id), { taslak: false, yayin: Date.now() }, { merge: true }).then(() => { flash("Yayınlandı, ekip görebilir"); $("rp-yay").hidden = true; $("rp-dur").textContent = ""; }).catch(() => flash("Kaydedilemedi")); }
+function raporAc(id) {
+  const t = toplantilar.find(x => x.id === id); if (!t || !t.rapor) return flash("Bu kayıtta rapor yok");
+  RPID = id; const R = t.rapor, L = x => (x || []).map(s => `<li>${esc(s)}</li>`).join("");
+  const hd = `<div class="hd"><span class="lg2">${LOGO2}</span><span>JUVÉMİ · KURUMSAL BELGE · ${esc(R.no || "")}</span><span>${esc(R.tarih || "")}</span></div>`;
+  let sayfa = 0; const ft = () => `<div class="ft"><span>Juvémi · ${esc(R.no || "")} · ${esc(R.baslik || "")}</span><span>${++sayfa}</span></div>`;
+  const kapak = `<section class="rpg kapak"><div class="c" style="width:150mm;height:150mm;background:var(--red);right:-42mm;top:-75mm"></div><div class="c" style="width:82mm;height:82mm;background:var(--yel);right:32mm;top:73mm"></div><div class="c" style="width:60mm;height:60mm;background:var(--pink);left:-17mm;bottom:-23mm"></div><div class="c" style="width:23mm;height:23mm;background:#e8e2da;right:14mm;bottom:30mm"></div>
+    <div class="lgk">${LOGO2}<small>little things for growing minds</small></div>
+    <div class="ct"><span class="pill">${esc(R.etiket || "KURUMSAL RAPOR")}</span><h1>${esc(R.baslik || "")}</h1><div class="sub">${esc(R.alt || "")}</div><div class="tags">${(R.etiketler || []).map(x => `<span>${esc(x)}</span>`).join("")}</div></div>
+    <div class="cf"><span>Juvémi · Şirket içi · Gizli</span><span>Belge No: ${esc(R.no || "")}</span></div></section>`;
+  const s1 = `<section class="rpg">${hd}<div class="meta"><div><span>Hazırlayan</span>${esc(R.hazirlayan || "")}</div><div><span>Dönem</span>${esc(R.donem || "")}</div><div><span>Kaynak</span>${esc(R.kaynak || "")}</div><div><span>Dağıtım</span>Kurucu ortaklar</div></div>
+    <div class="ey">1 · Yönetici özeti</div><h2>Haftanın özeti</h2><p class="lead">${esc(R.ozet || "")}</p>
+    <div class="stats">${(R.istat || []).map(([v, l]) => `<div class="st"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join("")}</div>
+    ${(R.kisiler || []).slice(0, 1).map((k, i) => kisiHTML(k, i + 2)).join("")}${ft()}</section>`;
+  const s2 = `<section class="rpg">${hd}${(R.kisiler || []).slice(1).map((k, i) => kisiHTML(k, i + 3)).join("")}${ft()}</section>`;
+  const n = (R.kisiler || []).length + 2;
+  const s3 = `<section class="rpg">${hd}<div class="ey">${n} · Toplantı gündemi</div><h2>Karar önerileri ve aksiyonlar</h2>
+    <h3>Karar önerileri</h3><table>${(R.kararlar || []).map((k, i) => `<tr><td>Karar ${i + 1}</td><td>${esc(k)}</td></tr>`).join("")}</table>
+    <h3>Gelecek hafta aksiyonları</h3><div class="kisi" style="grid-template-columns:1fr 1fr 1fr">${(R.aksiyonlar || []).map(a => `<div class="card"><b class="t">${esc(a.kim)}</b><ul>${L(a.isler)}</ul></div>`).join("")}</div>
+    <div class="sign"><div>Mustafa ALTINTOP<span>Onaylayan · Kurucu Ortak</span></div><div>Fatma Nur TAKIŞ ALTINTOP<span>Kurucu Ortak</span></div><div>Rumeysa TAKIŞ<span>Kurucu Ortak</span></div></div>
+    <p style="font-size:7pt;color:var(--mut2);margin-top:4mm">Bu değerlendirme Drive'daki haftalık üretim dosyaları incelenerek Claude tarafından taslak olarak hazırlanmış ve Mustafa tarafından onaylanmıştır. Şirket içi kullanım içindir.</p>${ft()}</section>`;
+  $("rp-sahne").innerHTML = kapak + s1 + s2 + s3;
+  $("rp-bas").textContent = R.no + " · " + R.baslik; $("rp-yay").hidden = !(t.taslak && KADI === "mustafa"); $("rp-dur").textContent = t.taslak ? "Taslak — ekip henüz görmüyor" : "";
+  $("rp-ov").hidden = false; document.body.style.overflow = "hidden";
+}
+function kisiHTML(k, no) { const L = x => (x || []).map(s => `<li>${esc(s)}</li>`).join("");
+  return `<div class="ey">${no} · ${esc(k.rol || "")}</div><h3 style="margin-top:1mm;font-size:16pt">${esc(k.ad)}</h3>${k.not ? `<div class="note">${esc(k.not)}</div>` : ""}
+  <div class="kisi"><div class="card"><b class="t">Ürettikleri</b><ul>${L(k.uretim)}</ul></div><div class="card"><b class="t">Değerlendirme</b><ul>${L(k.deg)}</ul></div></div>`; }
+$("rp-kapat").onclick = () => { $("rp-ov").hidden = true; document.body.style.overflow = ""; };
+$("rp-pdf").onclick = () => { const eski = document.title, t = toplantilar.find(x => x.id === RPID); if (t && t.rapor) document.title = "Juvemi-" + (t.rapor.no || "rapor"); print(); setTimeout(() => document.title = eski, 500); };
+$("rp-yay").onclick = () => RPID && yayinla(RPID);
+addEventListener("keydown", e => { if (e.key === "Escape" && !$("rp-ov").hidden) $("rp-kapat").click(); });
+$("tp-rapor").onclick = () => { const r = toplantilar.filter(t => t.rapor && (!t.taslak || KADI === "mustafa")); if (!r.length) return flash(KADI === "mustafa" ? "Henüz rapor yok — Claude'a analiz ettir" : "Bu haftanın raporu henüz yayınlanmadı"); raporAc(r[0].id); };
+$("tp-analiz").onclick = () => { setDoc(doc(db, "ortak", "analiz"), { istek: Date.now(), kadi: KADI, durum: "bekliyor" }, { merge: true }).catch(() => { });
+  window.open("https://claude.ai/code/session_01PMgkMbSADMZTYNyGgZe3ov", "_blank", "noopener"); flash("İstek kaydedildi — Claude'a 'haftalık raporu hazırla' yaz"); };
 function renderTp() {
+  $("tp-analiz").hidden = KADI !== "mustafa";
   const dl = lnk(ozet && ozet.drive);
   $("tp-drive").href = dl || "#"; $("tp-drive").style.opacity = dl ? 1 : .5; $("tp-drive").onclick = e => { if (!dl) { e.preventDefault(); flash("Önce Drive linkini ekle"); } };
   $("tp-drivedurum").textContent = dl ? "Herkes tıklayıp ulaşabilir" : "Henüz link eklenmedi";
   if ($("tp-form").contains(document.activeElement)) return;
   const el = $("tp-list");
   if (!toplantilar.length) { el.innerHTML = '<div class="empty">Henüz toplantı kaydı yok. "+ Yeni toplantı kaydı" ile ilkini ekle.</div>'; return; }
-  el.innerHTML = toplantilar.map(t => { const d = new Date(t.tarih + "T12:00"), U = t.uretimler || {};
+  const TL2 = toplantilar.filter(t => !t.taslak || KADI === "mustafa");
+  if (!TL2.length) { el.innerHTML = '<div class="empty">Henüz toplantı kaydı yok.</div>'; return; }
+  el.innerHTML = TL2.map(t => { const d = new Date(t.tarih + "T12:00"), U = t.uretimler || {};
     return `<article class="tp${TPACIK === t.id ? " open" : ""}" data-id="${esc(t.id)}">
-      <button type="button" class="tp-h"><span class="tp-date"><b>${d.getDate()}</b><span>${esc(AYLAR[d.getMonth()].slice(0, 3))}</span></span><span class="t"><b>${esc(t.baslik || "Toplantı")}</b><div>${esc((t.ozet || "").split("\n")[0])}</div></span><span class="ch">${svg("chev", 18)}</span></button>
+      <button type="button" class="tp-h"><span class="tp-date"><b>${d.getDate()}</b><span>${esc(AYLAR[d.getMonth()].slice(0, 3))}</span></span><span class="t"><b>${esc(t.baslik || "Toplantı")}${t.taslak ? '<span class="tp-taslak">Taslak · sadece sen</span>' : ""}</b><div>${esc((t.ozet || "").split("\n")[0])}</div></span><span class="ch">${svg("chev", 18)}</span></button>
       <div class="tp-b">
         ${t.ozet ? `<div><h3>Özet</h3><p>${esc(t.ozet)}</p></div>` : ""}
         <div><h3>Haftalık üretimler</h3><div class="tp-u">${ORTAKLAR.map(([k, ad]) => { const u = U[k] || {}, m = ekip.find(x => x.id === k) || { ad };
@@ -501,10 +542,12 @@ function renderTp() {
             ${lnk(u.link) ? `<a href="${esc(u.link)}" target="_blank" rel="noopener">Dosyaları aç ↗</a>` : ""}</div>`; }).join("")}</div></div>
         ${(t.kararlar || []).length ? `<div><h3>Alınan kararlar</h3><ul class="tp-ul">${t.kararlar.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
         ${(t.aksiyonlar || []).length ? `<div><h3>Aksiyonlar</h3><ul class="tp-ul">${t.aksiyonlar.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-        <div class="tp-act">${lnk(t.drive) ? `<a class="lnk" href="${esc(t.drive)}" target="_blank" rel="noopener">Bu haftanın Drive klasörü ↗</a>` : ""}<button type="button" class="m-edit tp-duz">Düzenle</button><button type="button" class="del tp-sil">Sil</button><span class="muted" style="margin-left:auto;font-size:12px">${esc(t.ekleyen ? "Kaydeden: " + t.ekleyen : "")}</span></div>
+        <div class="tp-act">${t.rapor ? `<button type="button" class="btn tp-rp">📄 Raporu aç (PDF)</button>` : ""}${t.taslak && KADI === "mustafa" ? `<button type="button" class="btn dark tp-yay">Yayınla</button>` : ""}${lnk(t.drive) ? `<a class="lnk" href="${esc(t.drive)}" target="_blank" rel="noopener">Bu haftanın Drive klasörü ↗</a>` : ""}<button type="button" class="m-edit tp-duz">Düzenle</button><button type="button" class="del tp-sil">Sil</button><span class="muted" style="margin-left:auto;font-size:12px">${esc(t.ekleyen ? "Kaydeden: " + t.ekleyen : "")}</span></div>
       </div></article>`; }).join("");
   el.querySelectorAll(".tp").forEach(c => { const id = c.dataset.id;
     c.querySelector(".tp-h").onclick = () => { TPACIK = TPACIK === id ? null : id; renderTp(); };
+    const rb = c.querySelector(".tp-rp"); if (rb) rb.onclick = () => raporAc(id);
+    const yb = c.querySelector(".tp-yay"); if (yb) yb.onclick = () => yayinla(id);
     c.querySelector(".tp-duz").onclick = () => tpForm(toplantilar.find(x => x.id === id));
     const s = c.querySelector(".tp-sil"); s.onclick = () => { if (!s.classList.contains("sure")) { s.classList.add("sure"); s.textContent = "Silmek için tekrar tıkla"; setTimeout(() => { s.classList.remove("sure"); s.textContent = "Sil"; }, 4000); return; }
       deleteDoc(doc(db, "toplantilar", id)).then(() => flash("Silindi")).catch(() => flash("Silinemedi")); };

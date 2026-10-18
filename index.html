@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Juvémi">
 <script>try{var t=localStorage.getItem("juvemi-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=Lora:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: logo + kişi çipi → sekmeler → sekme içeriği (genel, görevlerim, giderler, modüller) */
 :root{
@@ -65,6 +65,38 @@ body.suruklen,body.suruklen *{cursor:grabbing!important}
 .g-detay{margin-top:10px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px;cursor:auto}.g-yorum{font-size:14px}.g-yorum span{color:var(--muted);font-size:11.5px;margin-left:6px}
 .g-yf{display:flex;gap:6px}.g-yf input{flex:1}.g-yon{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:var(--bg);border-radius:10px;padding:10px}.g-yon label{display:grid;gap:4px;font-size:12px;color:var(--muted)}.g-sil{justify-self:start}
 @media (max-width:560px){.gk{gap:10px;padding:12px}.g-oy{width:40px}}
+
+#rp-ov{position:fixed;inset:0;z-index:900;background:#3b4148;overflow:auto}
+.rp-bar{position:sticky;top:0;z-index:2;display:flex;gap:10px;align-items:center;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--line)}.rp-bar b{margin-right:auto;font-size:15px}
+.rp-sahne{padding:24px 12px 60px;display:grid;justify-items:center;gap:18px}
+.rpg{--sl:#5f6872;--red:#b9484a;--yel:#dfa846;--pink:#dca597;--cream:#f4ede3;--ink2:#2f343a;--mut2:#6b7279;width:210mm;min-height:297mm;background:#fff;color:var(--ink2);position:relative;overflow:hidden;padding:24mm 18mm 18mm;font-family:"Plus Jakarta Sans",sans-serif;font-size:9.6pt;line-height:1.45;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.rpg .ser{font-family:Lora,Georgia,serif}
+.rpg.kapak{background:var(--sl);color:#fff;padding:0}
+.rpg .c{position:absolute;border-radius:50%}
+.rpg .lgk{position:absolute;left:26mm;top:24mm;background:var(--cream);border-radius:14px;padding:5mm 7mm;color:#1d1d1d;font-family:Jost,sans-serif;font-weight:600;font-size:30pt;line-height:1}.rpg .lgk .m{color:#7090A3}.rpg .lgk .i{color:#E0A83A}.rpg .lgk small{display:block;font-family:"Plus Jakarta Sans";font-size:6.5pt;font-weight:500;color:#555;letter-spacing:.04em;margin-top:1.5mm}
+.rpg .ct{position:absolute;left:26mm;right:26mm;top:172mm}
+.rpg .pill{display:inline-block;background:var(--yel);color:var(--sl);font-weight:700;font-size:8pt;letter-spacing:.2em;padding:2mm 4.5mm;border-radius:20px}
+.rpg h1{font-family:Lora,Georgia,serif;font-size:36pt;line-height:1.05;margin:6mm 0 3mm;font-weight:600;color:#fff}
+.rpg .sub{font-family:Lora,Georgia,serif;font-style:italic;font-size:14pt;opacity:.9}
+.rpg .tags{margin-top:8mm}.rpg .tags span{display:inline-block;border:1px solid rgba(255,255,255,.55);border-radius:20px;padding:1.6mm 4mm;font-size:8.5pt;margin:0 2mm 2.5mm 0}
+.rpg .cf{position:absolute;left:26mm;right:26mm;bottom:20mm;border-top:1px solid rgba(255,255,255,.3);padding-top:4mm;display:flex;justify-content:space-between;font-size:8.5pt}
+.rpg .hd{position:absolute;left:18mm;right:18mm;top:9mm;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e6dccd;padding-bottom:2.5mm;font-size:7pt;color:var(--mut2)}.rpg .hd .lg2{font-family:Jost;font-weight:600;font-size:13pt;color:#1d1d1d}.rpg .hd .lg2 .m{color:#7090A3}.rpg .hd .lg2 .i{color:#E0A83A}
+.rpg .ft{position:absolute;left:18mm;right:18mm;bottom:9mm;display:flex;justify-content:space-between;font-size:7pt;color:var(--mut2)}
+.rpg .ey{color:var(--red);font-size:8pt;font-weight:700;letter-spacing:.25em;text-transform:uppercase}
+.rpg h2{font-family:Lora,Georgia,serif;color:var(--sl);font-size:22pt;margin:1mm 0 4mm;line-height:1.15;font-weight:600}
+.rpg h3{font-family:Lora,Georgia,serif;color:var(--sl);font-size:13pt;margin:5mm 0 2.5mm;font-weight:600}
+.rpg .lead{color:#4a5158;font-size:10.5pt;margin:0 0 5mm}
+.rpg .meta{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #e6dccd;border-radius:9px;margin:0 0 5mm;overflow:hidden}.rpg .meta div{padding:2.5mm 3.5mm;border-right:1px solid #e6dccd;font-size:8pt}.rpg .meta div:last-child{border:0}.rpg .meta span{display:block;font-size:6.5pt;letter-spacing:.15em;color:var(--mut2);text-transform:uppercase}
+.rpg .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:3.5mm;margin:0 0 3mm}.rpg .st{border:1px solid #e6dccd;border-radius:9px;padding:4mm}.rpg .st .v{font-family:Lora,Georgia,serif;font-size:20pt;color:var(--red);line-height:1}.rpg .st .l{font-size:8pt;color:var(--mut2);margin-top:1.5mm}
+.rpg .kisi{display:grid;grid-template-columns:1fr 1fr;gap:3.5mm;margin-bottom:4mm}.rpg .card{background:var(--cream);border-radius:9px;padding:4mm 5mm}.rpg .card b.t{display:block;color:var(--sl);margin-bottom:1.5mm;font-size:8pt;letter-spacing:.15em;text-transform:uppercase}
+.rpg .note{background:#f6f1ea;border-left:3.5px solid var(--yel);border-radius:0 9px 9px 0;padding:3mm 5mm;margin-bottom:3mm}
+.rpg ul,.rpg ol{margin:0;padding-left:5mm}.rpg li{margin:.8mm 0}
+.rpg table{width:100%;border-collapse:collapse}.rpg td{padding:2mm 0;border-bottom:1px dotted #cfc6b8;vertical-align:top}.rpg td:first-child{width:34mm;font-weight:700;color:var(--red)}
+.rpg .sign{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-top:8mm}.rpg .sign div{border-top:1px solid var(--sl);padding-top:2mm;font-size:8pt}.rpg .sign span{display:block;color:var(--mut2);font-size:7pt}
+.tp-taslak{display:inline-block;font-size:11px;font-weight:700;background:var(--mustard);color:#222;border-radius:99px;padding:1px 8px;margin-left:8px;vertical-align:middle}
+@media print{@page{size:A4;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}.rpg:last-child{page-break-after:auto;break-after:auto}body>*:not(#rp-ov){display:none!important}#rp-ov{position:static;background:none;overflow:visible}.rp-bar{display:none}.rp-sahne{padding:0;display:block}.rpg{box-shadow:none;page-break-after:always;break-after:page;height:296.5mm;min-height:0;margin:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media screen and (max-width:820px){.rp-sahne{zoom:.45}}
+.rpg h2,.rpg h3{text-transform:none;letter-spacing:0}
 .task.done{opacity:.65}.task.dragging{opacity:.4}.task.over-top{box-shadow:0 -3px 0 var(--mustard)}.task.over-bot{box-shadow:0 3px 0 var(--mustard)}
 .num{font-family:var(--display);font-weight:700;font-size:22px;color:var(--slate);line-height:1.1;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center}
 .num small{font:700 11px var(--body);color:var(--muted)}
@@ -413,6 +445,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
+<div id="rp-ov" hidden><div class="rp-bar"><b id="rp-bas">Rapor</b><span class="muted" id="rp-dur"></span><button type="button" class="btn" id="rp-yay" hidden>Yayınla (ekip görsün)</button><button type="button" class="btn" id="rp-pdf">PDF indir / Yazdır</button><button type="button" class="btn dark" id="rp-kapat">Kapat ✕</button></div><div class="rp-sahne" id="rp-sahne"></div></div>
 <div id="intro" aria-hidden="true"><style>
 #intro{animation:jvKac .4s 7s forwards;position:fixed;inset:0;z-index:10000;background:var(--bg);display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:opacity .6s ease,transform .6s ease}
 #intro.bitti{opacity:0;transform:scale(1.04);pointer-events:none}
@@ -568,7 +601,7 @@ setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
   <div class="pane" data-pane="toplantilar">
     <section class="tp-top">
       <div><b>Haftalık üretimler klasörü</b><div class="muted" id="tp-drivedurum">Google Drive'daki ortak klasör</div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" id="tp-yukle" target="_blank" rel="noopener" style="text-decoration:none">Haftalık üretimimi yükle</a><a class="btn dark" id="tp-drive" target="_blank" rel="noopener" style="text-decoration:none">Tüm klasör</a><button type="button" class="btn dark" id="tp-drivedeg">Linki değiştir</button><button type="button" class="btn dark" id="tp-yeni">+ Yeni toplantı kaydı</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" id="tp-yukle" target="_blank" rel="noopener" style="text-decoration:none">Haftalık üretimimi yükle</a><a class="btn dark" id="tp-drive" target="_blank" rel="noopener" style="text-decoration:none">Tüm klasör</a><button type="button" class="btn" id="tp-rapor" style="background:var(--slate);color:#fff">📄 Bu haftanın raporu</button><button type="button" class="btn dark" id="tp-analiz" hidden>✦ Claude'a analiz ettir</button><button type="button" class="btn dark" id="tp-drivedeg">Linki değiştir</button><button type="button" class="btn dark" id="tp-yeni">+ Yeni toplantı kaydı</button></div>
     </section>
     <form class="card tp-form" id="tp-form" hidden>
       <div class="tp-g"><label>Tarih<input type="date" id="tf-tarih" required></label><label class="w2">Başlık<input id="tf-baslik" placeholder="ör. 1. Hafta değerlendirmesi" required></label></div>
@@ -661,6 +694,6 @@ setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
 </div>
 </div>
 
-<script>window.JV="20261018134705";</script><script>(function(){if(/[?&]v=/.test(location.search))return;fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=v.trim();if(v&&window.JV&&v!==window.JV&&!/^__/.test(window.JV))location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})})();</script>
-<script type="module" src="app.js?v=20261018134705"></script>
+<script>window.JV="20261018140218";</script><script>(function(){if(/[?&]v=/.test(location.search))return;fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=v.trim();if(v&&window.JV&&v!==window.JV&&!/^__/.test(window.JV))location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})})();</script>
+<script type="module" src="app.js?v=20261018140218"></script>
 </body></html>
