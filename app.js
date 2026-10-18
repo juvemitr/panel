@@ -497,7 +497,7 @@ function raporAc(id) {
     <div class="cf"><span>Juvémi · Şirket içi · Gizli</span><span>Belge No: ${esc(R.no || "")}</span></div></section>`;
   const s1 = `<section class="rpg">${hd}<div class="meta"><div><span>Hazırlayan</span>${esc(R.hazirlayan || "")}</div><div><span>Dönem</span>${esc(R.donem || "")}</div><div><span>Kaynak</span>${esc(R.kaynak || "")}</div><div><span>Dağıtım</span>Kurucu ortaklar</div></div>
     <div class="ey">1 · Yönetici özeti</div><h2>Haftanın özeti</h2><p class="lead">${esc(R.ozet || "")}</p>
-    <div class="stats">${(R.istat || []).map(([v, l]) => `<div class="st"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join("")}</div>
+    <div class="stats">${(R.istat || []).map(x => { const v = Array.isArray(x) ? x[0] : x.v, l = Array.isArray(x) ? x[1] : x.l; return [v, l]; }).map(([v, l]) => `<div class="st"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join("")}</div>
     ${(R.kisiler || []).slice(0, 1).map((k, i) => kisiHTML(k, i + 2)).join("")}${ft()}</section>`;
   const s2 = `<section class="rpg">${hd}${(R.kisiler || []).slice(1).map((k, i) => kisiHTML(k, i + 3)).join("")}${ft()}</section>`;
   const n = (R.kisiler || []).length + 2;
