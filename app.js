@@ -197,6 +197,8 @@ function renderGenel() {
 
 /* ---------- görevlerim ---------- */
 let DRAG = null;
+window.juvemiGorevOku = () => JSON.parse(JSON.stringify(panel.gorevler || []));
+window.juvemiGorevYaz = list => { panel.gorevler = list; savePanel(); return list.length; };
 function savePanel() { setTimeout(renderTabs, 0); setDoc(doc(db, "kullanicilar", ME), { ad: MYNAME, gorevler: panel.gorevler }).then(() => flash("Kaydedildi")).catch(() => flash("Kaydedilemedi")); renderTasks(); }
 const altTum = L => (L || []).reduce((s, x) => s.concat([x], altTum(x.altlar)), []);
 function altBul(L, id, ust) { for (const x of L || []) { if (x.id === id) return { x, liste: L, ust }; const r = altBul(x.altlar, id, x); if (r) return r; } return null; }
