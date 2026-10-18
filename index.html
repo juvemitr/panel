@@ -40,6 +40,15 @@ section{display:flex;flex-direction:column}.pane{display:flex;flex-direction:col
 .task .num{touch-action:none;cursor:grab}.task{cursor:grab}.task input,.task textarea,.task .desc{cursor:auto}.task.dragging{cursor:grabbing}.task.yuva{background:transparent;border:2px dashed var(--mustard);box-shadow:none!important;transition:none}.task.yuva>*{visibility:hidden}
 .hayalet{position:fixed;z-index:999;margin:0;pointer-events:none;transform:rotate(-1.5deg) scale(1.02);box-shadow:0 18px 40px rgba(0,0,0,.25)!important;cursor:grabbing;opacity:.97}
 body.suruklen,body.suruklen *{cursor:grabbing!important}
+.alt{grid-column:2/4;margin-top:6px;cursor:auto}
+.alt-ust{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-bottom:4px}.alt-ust b{color:var(--ink)}.alt-ust em{font-style:normal;font-weight:700;color:var(--ink);min-width:36px;text-align:right}
+.alt-bar{flex:1;height:6px;border-radius:6px;background:var(--line);overflow:hidden}.alt-bar i{display:block;height:100%;background:var(--mustard);border-radius:6px;transition:width .3s}
+.alt ul{list-style:none;margin:0;padding:0}.alt li{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px}.alt li:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.alt label{flex:1;display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px}.alt input[type=checkbox]{width:17px;height:17px;accent-color:var(--mustard);margin:0;flex:none}
+.alt li.ok span{text-decoration:line-through;color:var(--muted)}
+.alt-sil{border:0;background:none;color:var(--muted);cursor:pointer;opacity:0;font-size:12px;padding:2px 6px}.alt li:hover .alt-sil{opacity:1}@media (hover:none){.alt-sil{opacity:.6}}
+.alt-ekle{display:flex;gap:6px;margin-top:4px}.alt-ekle input{flex:1;font-size:13px;padding:6px 10px;border:1px dashed var(--line);background:transparent}.alt-ekle input:focus{border-style:solid}.alt-ekle button{font-size:12px;padding:4px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+@media (max-width:560px){.alt{grid-column:1/3}}
 .task.done{opacity:.65}.task.dragging{opacity:.4}.task.over-top{box-shadow:0 -3px 0 var(--mustard)}.task.over-bot{box-shadow:0 3px 0 var(--mustard)}
 .num{font-family:var(--display);font-weight:700;font-size:22px;color:var(--slate);line-height:1.1;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center}
 .num small{font:700 11px var(--body);color:var(--muted)}
@@ -566,6 +575,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 </div>
 
-<script>window.JV="20261018125638";</script>
-<script type="module" src="app.js?v=20261018125638"></script>
+<script>window.JV="20261018130037";</script>
+<script type="module" src="app.js?v=20261018130037"></script>
 </body></html>

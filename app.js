@@ -195,6 +195,22 @@ function renderGenel() {
 /* ---------- görevlerim ---------- */
 let DRAG = null;
 function savePanel() { setTimeout(renderTabs, 0); setDoc(doc(db, "kullanicilar", ME), { ad: MYNAME, gorevler: panel.gorevler }).then(() => flash("Kaydedildi")).catch(() => flash("Kaydedilemedi")); renderTasks(); }
+function altHTML(t) {
+  const A = t.altlar || [], y = A.filter(x => x.ok).length, yz = A.length ? Math.round(100 * y / A.length) : 0;
+  return `<div class="alt">${A.length ? `<div class="alt-ust"><span>Alt işler</span><b>${y} / ${A.length}</b><div class="alt-bar"><i style="width:${yz}%"></i></div><em>%${yz}</em></div>` : ""}
+  <ul>${A.map(x => `<li class="${x.ok ? "ok" : ""}" data-a="${esc(x.id)}"><label><input type="checkbox" ${x.ok ? "checked" : ""}><span>${esc(x.ad)}</span></label><button type="button" class="alt-sil" title="Sil">✕</button></li>`).join("")}</ul>
+  <form class="alt-ekle"><input type="text" placeholder="+ Alt iş ekle" maxlength="140"><button type="submit">Ekle</button></form></div>`;
+}
+function altBagla(c, t) {
+  c.querySelectorAll(".alt li").forEach(li => {
+    const x = (t.altlar || []).find(z => z.id === li.dataset.a); if (!x) return;
+    li.querySelector("input").onchange = e => { x.ok = e.target.checked; if (t.altlar.length && t.altlar.every(z => z.ok) && t.durum !== "bitti") t.durum = "bitti"; else if (!x.ok && t.durum === "bitti") t.durum = "devam"; else if (x.ok && (t.durum || "acik") === "acik") t.durum = "devam"; savePanel(); };
+    li.querySelector(".alt-sil").onclick = () => { t.altlar = t.altlar.filter(z => z !== x); savePanel(); };
+  });
+  const f = c.querySelector(".alt-ekle"), inp = f.querySelector("input");
+  inp.id = "alt-" + t.id;
+  f.onsubmit = e => { e.preventDefault(); const v = inp.value.trim(); if (!v) return; (t.altlar = t.altlar || []).push({ id: Date.now().toString(36), ad: v, ok: false }); if (t.durum === "bitti") t.durum = "devam"; savePanel(); setTimeout(() => { const n = $("alt-" + t.id); n && n.focus(); }, 50); };
+}
 function renderTasks() {
   const g = panel.gorevler || [], done = g.filter(t => t.durum === "bitti").length;
   $("pnum").textContent = done + " / " + g.length; $("barfill").style.width = (g.length ? 100 * done / g.length : 0) + "%";
@@ -203,8 +219,9 @@ function renderTasks() {
   const focused = document.activeElement && document.activeElement.id; el.innerHTML = "";
   g.forEach((t, i) => {
     const s = t.durum || "acik", c = document.createElement("article"); c.className = "task" + (s === "bitti" ? " done" : ""); c.dataset.id = t.id;
-    c.innerHTML = `<div class="num" title="Tutup sürükle">${i + 1}<small>⋮⋮</small></div><div class="ttl">${esc(t.baslik)}</div><button class="pill" data-s="${s}" type="button">${LBL[s]}</button>${t.aciklama ? `<div class="desc">${esc(t.aciklama)}</div>` : ""}<input type="date" class="tdate" value="${esc(t.tarih || "")}" aria-label="Tarih" title="Tarih (takvimde görünür)"><textarea class="note" id="n-${esc(t.id)}" placeholder="Not ekle…">${esc(t.not || "")}</textarea><button class="del" type="button">Sil</button>`;
+    c.innerHTML = `<div class="num" title="Tutup sürükle">${i + 1}<small>⋮⋮</small></div><div class="ttl">${esc(t.baslik)}</div><button class="pill" data-s="${s}" type="button">${LBL[s]}</button>${t.aciklama ? `<div class="desc">${esc(t.aciklama)}</div>` : ""}${altHTML(t)}<input type="date" class="tdate" value="${esc(t.tarih || "")}" aria-label="Tarih" title="Tarih (takvimde görünür)"><textarea class="note" id="n-${esc(t.id)}" placeholder="Not ekle…">${esc(t.not || "")}</textarea><button class="del" type="button">Sil</button>`;
     c.querySelector(".pill").onclick = () => { t.durum = ST[(ST.indexOf(s) + 1) % 3]; savePanel(); };
+    altBagla(c, t);
     const td = c.querySelector(".tdate"); td.onchange = () => { t.tarih = td.value; savePanel(); };
     const ta = c.querySelector("textarea"); ta.onchange = () => { t.not = ta.value; savePanel(); };
     const del = c.querySelector(".del"); del.onclick = () => { if (!del.classList.contains("sure")) { del.classList.add("sure"); del.textContent = "Emin misin? Silmek için tekrar tıkla"; setTimeout(() => { del.classList.remove("sure"); del.textContent = "Sil"; }, 4000); return; } panel.gorevler = panel.gorevler.filter(x => x.id !== t.id); savePanel(); };
@@ -646,5 +663,5 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "gunluk"), orderBy("ts", "desc")), s => { gunluk = s.docs.map(d => d.data()); renderGenel(); }));
-  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && document.activeElement.tagName === "TEXTAREA")) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
+  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && (document.activeElement.tagName === "TEXTAREA" || (document.activeElement.closest(".alt-ekle") && document.activeElement.value)))) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
 }
