@@ -466,7 +466,7 @@ function oyna(){
  setTimeout(function(){tg.animate([{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"none"}],{duration:600,fill:"forwards",easing:"ease-out"})},son+120);
  setTimeout(bit,son+1500);
 }
-var basla=function(){if(!a||a.state!=="suspended")el.onclick=bit;else setTimeout(function(){el.onclick=bit},1200);var b=el.querySelector(".bas");b&&b.remove();if(a&&a.state==="suspended"){a.resume().then(oyna,oyna)}else oyna()};
+var basla=function(){if(!a||a.state!=="suspended")el.onclick=bit;else setTimeout(function(){el.onclick=bit},1200);var b=el.querySelector(".bas");b&&b.remove();try{a&&a.state==="suspended"&&a.resume()}catch(e){}oyna()};
 var hazir=function(){if(document.fonts&&document.fonts.ready)document.fonts.ready.then(kontrol);else kontrol()};
 function kontrol(){if(a&&a.state==="suspended"){var ac=function(){try{a.resume()}catch(e){}};el.addEventListener("pointerdown",ac);addEventListener("keydown",ac,{once:true});el.onclick=null}basla()}
 if(document.readyState==="loading")addEventListener("DOMContentLoaded",hazir);else hazir();
@@ -661,6 +661,6 @@ setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
 </div>
 </div>
 
-<script>window.JV="20261018133938";</script>
-<script type="module" src="app.js?v=20261018133938"></script>
+<script>window.JV="20261018134256";</script>
+<script type="module" src="app.js?v=20261018134256"></script>
 </body></html>
