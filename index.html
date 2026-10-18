@@ -466,15 +466,11 @@ function oyna(){
  setTimeout(function(){tg.animate([{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"none"}],{duration:600,fill:"forwards",easing:"ease-out"})},son+120);
  setTimeout(bit,son+1500);
 }
-var basla=function(){el.onclick=bit;var b=el.querySelector(".bas");b&&b.remove();if(a&&a.state==="suspended"){a.resume().then(oyna,oyna)}else oyna()};
+var basla=function(){if(!a||a.state!=="suspended")el.onclick=bit;else setTimeout(function(){el.onclick=bit},1200);var b=el.querySelector(".bas");b&&b.remove();if(a&&a.state==="suspended"){a.resume().then(oyna,oyna)}else oyna()};
 var hazir=function(){if(document.fonts&&document.fonts.ready)document.fonts.ready.then(kontrol);else kontrol()};
-function kontrol(){if(!a||a.state==="running"){basla();return}
- var b=document.createElement("div");b.className="bas";b.textContent="Başlamak için dokun";el.appendChild(b);
- el.querySelector(".top").style.cssText="opacity:1;left:50%;top:50%;position:fixed;animation:jvP 1.6s ease-in-out infinite";el.querySelector(".sah").style.visibility="hidden";
- var tek=function(){el.removeEventListener("pointerdown",tek);removeEventListener("keydown",tek);el.querySelector(".top").style.cssText="";el.querySelector(".sah").style.visibility="";basla()};
- el.addEventListener("pointerdown",tek);addEventListener("keydown",tek)}
+function kontrol(){if(a&&a.state==="suspended"){var ac=function(){try{a.resume()}catch(e){}};el.addEventListener("pointerdown",ac);addEventListener("keydown",ac,{once:true});el.onclick=null}basla()}
 if(document.readyState==="loading")addEventListener("DOMContentLoaded",hazir);else hazir();
-setTimeout(function(){if(!bitirildi&&!el.querySelector(".bas"))bit()},9000)})();</script></div>
+setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
 
 <div class="gate" id="gate"><form class="gbox" id="loginform">
   <div class="logo">Juvé<span class="m">m</span><span class="i">i</span></div>
@@ -665,6 +661,6 @@ setTimeout(function(){if(!bitirildi&&!el.querySelector(".bas"))bit()},9000)})();
 </div>
 </div>
 
-<script>window.JV="20261018133438";</script>
-<script type="module" src="app.js?v=20261018133438"></script>
+<script>window.JV="20261018133938";</script>
+<script type="module" src="app.js?v=20261018133938"></script>
 </body></html>
