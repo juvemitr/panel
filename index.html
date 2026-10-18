@@ -405,19 +405,19 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 <div id="intro" aria-hidden="true"><style>
 #intro{position:fixed;inset:0;z-index:10000;background:var(--bg);display:grid;place-items:center;overflow:hidden;cursor:pointer}
 #intro .d{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px;border-radius:50%;transform:scale(0)}
-#intro .y{background:var(--mustard);animation:jvY 1.05s cubic-bezier(.5,0,.2,1) forwards}
-#intro .b{background:var(--slate);animation:jvB 1.05s cubic-bezier(.5,0,.2,1) forwards}
+#intro .y{background:var(--mustard);animation:jvY 1.45s linear forwards}
+#intro .b{background:var(--slate);animation:jvB 1.45s .12s linear both}
 #intro .w{position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px;border-radius:50%;transform:scale(0)}
-#intro .w1{background:var(--mustard);animation:jvW 0.9s .95s cubic-bezier(.7,0,.2,1) forwards}
-#intro .w2{background:var(--slate);animation:jvW 0.9s 1.08s cubic-bezier(.7,0,.2,1) forwards}
-#intro .w3{background:var(--bg);animation:jvW 0.9s 1.22s cubic-bezier(.7,0,.2,1) forwards}
+#intro .w1{background:var(--mustard);animation:jvW 0.9s 1.45s cubic-bezier(.7,0,.2,1) forwards}
+#intro .w2{background:var(--slate);animation:jvW 0.9s 1.58s cubic-bezier(.7,0,.2,1) forwards}
+#intro .w3{background:var(--bg);animation:jvW 0.9s 1.72s cubic-bezier(.7,0,.2,1) forwards}
 #intro .lg{position:relative;font-family:var(--display);font-weight:600;font-size:clamp(54px,11vw,120px);letter-spacing:-1px;color:var(--ink);line-height:1;display:flex}
 #intro .lg span{display:inline-block;opacity:0;transform:translateY(40%) scale(.9);filter:blur(6px);animation:jvL .6s cubic-bezier(.2,.8,.2,1) forwards}
 #intro .lg .m{color:var(--slate)}#intro .lg .i{color:var(--mustard)}
-#intro .tg{position:absolute;top:calc(50% + clamp(44px,8vw,86px));font-size:clamp(12px,1.6vw,16px);letter-spacing:.32em;text-transform:uppercase;color:var(--muted);opacity:0;animation:jvT .7s 2.05s ease forwards}
+#intro .tg{position:absolute;top:calc(50% + clamp(44px,8vw,86px));font-size:clamp(12px,1.6vw,16px);letter-spacing:.32em;text-transform:uppercase;color:var(--muted);opacity:0;animation:jvT .7s 2.55s ease forwards}
 #intro.bitti{animation:jvO .55s ease forwards}
-@keyframes jvY{0%{transform:translate(0,0) scale(0)}30%{transform:translate(-26px,0) scale(1.15)}45%{transform:translate(-26px,0) scale(1)}80%{transform:translate(0,0) scale(1)}100%{transform:translate(0,0) scale(1.6)}}
-@keyframes jvB{0%{transform:translate(0,0) scale(0)}38%{transform:translate(26px,0) scale(1.15)}52%{transform:translate(26px,0) scale(1)}80%{transform:translate(0,0) scale(1)}100%{transform:translate(0,0) scale(1.6)}}
+@keyframes jvY{0%{transform:translate(-210px,-280px) scale(1);opacity:0;animation-timing-function:ease-in}10%{transform:translate(-210px,-160px) scale(1.2,.8);opacity:1;animation-timing-function:ease-out}16%{transform:translate(-179.0px,-198px) scale(.95,1.05);animation-timing-function:ease-in}22%{transform:translate(-148px,-106px) scale(1.25,.75);animation-timing-function:ease-out}25%{transform:translate(-148px,-106px) scale(1);animation-timing-function:ease-in-out}31%{transform:translate(-117.5px,-144px) scale(.95,1.05);animation-timing-function:ease-in}37%{transform:translate(-87px,-53px) scale(1.25,.75);animation-timing-function:ease-out}40%{transform:translate(-87px,-53px) scale(1);animation-timing-function:ease-in-out}46%{transform:translate(-56.5px,-91px) scale(.95,1.05);animation-timing-function:ease-in}52%{transform:translate(-26px,0px) scale(1.25,.75);animation-timing-function:ease-out}55%{transform:translate(-26px,0px) scale(1);animation-timing-function:ease-in-out}68%{transform:translate(-26px,0) scale(1)}86%{transform:translate(0,0) scale(1)}100%{transform:translate(0,0) scale(1.6)}}
+@keyframes jvB{0%{transform:translate(-158px,-280px) scale(1);opacity:0;animation-timing-function:ease-in}10%{transform:translate(-158px,-160px) scale(1.2,.8);opacity:1;animation-timing-function:ease-out}16%{transform:translate(-127.0px,-198px) scale(.95,1.05);animation-timing-function:ease-in}22%{transform:translate(-96px,-106px) scale(1.25,.75);animation-timing-function:ease-out}25%{transform:translate(-96px,-106px) scale(1);animation-timing-function:ease-in-out}31%{transform:translate(-65.5px,-144px) scale(.95,1.05);animation-timing-function:ease-in}37%{transform:translate(-35px,-53px) scale(1.25,.75);animation-timing-function:ease-out}40%{transform:translate(-35px,-53px) scale(1);animation-timing-function:ease-in-out}46%{transform:translate(-4.5px,-91px) scale(.95,1.05);animation-timing-function:ease-in}52%{transform:translate(26px,0px) scale(1.25,.75);animation-timing-function:ease-out}55%{transform:translate(26px,0px) scale(1);animation-timing-function:ease-in-out}68%{transform:translate(26px,0) scale(1)}86%{transform:translate(0,0) scale(1)}100%{transform:translate(0,0) scale(1.6)}}
 @keyframes jvW{0%{transform:scale(0)}100%{transform:scale(var(--k))}}
 @keyframes jvL{to{opacity:1;transform:none;filter:none}}
 @keyframes jvT{to{opacity:1}}
@@ -425,13 +425,13 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @media (prefers-reduced-motion:reduce){#intro{display:none}}
 </style>
 <i class="d y"></i><i class="d b"></i><i class="w w1"></i><i class="w w2"></i><i class="w w3"></i>
-<div class="lg"><span style="animation-delay:1.55s">J</span><span style="animation-delay:1.61s">u</span><span style="animation-delay:1.67s">v</span><span style="animation-delay:1.73s">é</span><span class="m" style="animation-delay:1.79s">m</span><span class="i" style="animation-delay:1.85s">i</span></div>
+<div class="lg"><span style="animation-delay:2.05s">J</span><span style="animation-delay:2.11s">u</span><span style="animation-delay:2.17s">v</span><span style="animation-delay:2.23s">é</span><span class="m" style="animation-delay:2.29s">m</span><span class="i" style="animation-delay:2.35s">i</span></div>
 <div class="tg" lang="en">little things for growing minds</div>
 <script>(function(){var el=document.getElementById("intro");var gor=false;try{gor=sessionStorage.getItem("jv-intro")==="1"}catch(e){}
 if(gor||matchMedia("(prefers-reduced-motion: reduce)").matches){el.remove();return}try{sessionStorage.setItem("jv-intro","1")}catch(e){}
 var k=Math.ceil(Math.hypot(innerWidth,innerHeight)/20)+2;el.style.setProperty("--k",k);
 var bit=function(){if(!el.isConnected)return;el.classList.add("bitti");setTimeout(function(){el.remove()},560)};
-el.onclick=bit;setTimeout(bit,3000)})();</script></div>
+el.onclick=bit;setTimeout(bit,3500)})();</script></div>
 
 <div class="gate" id="gate"><form class="gbox" id="loginform">
   <div class="logo">Juvé<span class="m">m</span><span class="i">i</span></div>
@@ -611,6 +611,6 @@ el.onclick=bit;setTimeout(bit,3000)})();</script></div>
 </div>
 </div>
 
-<script>window.JV="20261018131430";</script>
-<script type="module" src="app.js?v=20261018131430"></script>
+<script>window.JV="20261018131819";</script>
+<script type="module" src="app.js?v=20261018131819"></script>
 </body></html>
