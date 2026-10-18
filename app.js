@@ -514,23 +514,31 @@ function raporAc(id) {
     <div class="ct"><span class="pill">${esc(R.etiket || "KURUMSAL RAPOR")}</span><h1>${esc(R.baslik || "")}</h1><div class="sub">${esc(R.alt || "")}</div><div class="tags">${(R.etiketler || []).map(x => `<span>${esc(x)}</span>`).join("")}</div></div>
     <div class="cf"><span>Juvémi · Şirket içi · Gizli</span><span>Belge No: ${esc(R.no || "")}</span></div></section>`;
   const s1 = `<section class="rpg">${hd}<div class="meta"><div><span>Hazırlayan</span>${esc(R.hazirlayan || "")}</div><div><span>Dönem</span>${esc(R.donem || "")}</div><div><span>Kaynak</span>${esc(R.kaynak || "")}</div><div><span>Dağıtım</span>Kurucu ortaklar</div></div>
-    <div class="ey">1 · Yönetici özeti</div><h2>Haftanın özeti</h2><p class="lead">${esc(R.ozet || "")}</p>
+    <div class="ey">1 · Yönetici özeti</div><h2>${esc(R.ozetBaslik || "Haftanın özeti")}</h2><p class="lead">${esc(R.ozet || "")}</p>
     <div class="stats">${(R.istat || []).map(x => { const v = Array.isArray(x) ? x[0] : x.v, l = Array.isArray(x) ? x[1] : x.l; return [v, l]; }).map(([v, l]) => `<div class="st"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join("")}</div>
     ${(R.kisiler || []).slice(0, 1).map((k, i) => kisiHTML(k, i + 2)).join("")}${ft()}</section>`;
   const s2 = `<section class="rpg">${hd}${(R.kisiler || []).slice(1).map((k, i) => kisiHTML(k, i + 3)).join("")}${ft()}</section>`;
   const n = (R.kisiler || []).length + 2;
-  const s3 = `<section class="rpg">${hd}<div class="ey">${n} · Toplantı gündemi</div><h2>Karar önerileri ve aksiyonlar</h2>
+  const s3 = `<section class="rpg">${hd}<div class="ey">${n} · ${esc(R.gundemEtiket || "Toplantı gündemi")}</div><h2>Karar önerileri ve aksiyonlar</h2>
     <h3>Karar önerileri</h3><table>${(R.kararlar || []).map((k, i) => `<tr><td>Karar ${i + 1}</td><td>${esc(k)}</td></tr>`).join("")}</table>
-    <h3>Gelecek hafta aksiyonları</h3><div class="kisi" style="grid-template-columns:1fr 1fr 1fr">${(R.aksiyonlar || []).map(a => `<div class="card"><b class="t">${esc(a.kim)}</b><ul>${L(a.isler)}</ul></div>`).join("")}</div>
+    <h3>${esc(R.aksiyonBaslik || "Gelecek hafta aksiyonları")}</h3><div class="kisi" style="grid-template-columns:1fr 1fr 1fr">${(R.aksiyonlar || []).map(a => `<div class="card"><b class="t">${esc(a.kim)}</b><ul>${L(a.isler)}</ul></div>`).join("")}</div>
     <div class="sign"><div>Mustafa ALTINTOP<span>Onaylayan · Kurucu Ortak</span></div><div>Fatma Nur TAKIŞ ALTINTOP<span>Kurucu Ortak</span></div><div>Rumeysa TAKIŞ<span>Kurucu Ortak</span></div></div>
-    <p style="font-size:7pt;color:var(--mut2);margin-top:4mm">Bu değerlendirme Drive'daki haftalık üretim dosyaları incelenerek Claude tarafından taslak olarak hazırlanmış ve Mustafa tarafından onaylanmıştır. Şirket içi kullanım içindir.</p>${ft()}</section>`;
-  $("rp-sahne").innerHTML = kapak + s1 + s2 + s3;
+    <p style="font-size:7pt;color:var(--mut2);margin-top:4mm">${esc(R.dipnot || "Bu değerlendirme Drive'daki haftalık üretim dosyaları incelenerek Claude tarafından taslak olarak hazırlanmış ve Mustafa tarafından onaylanmıştır. Şirket içi kullanım içindir.")}</p>${ft()}</section>`;
+  $("rp-sahne").innerHTML = kapak + (R.sayfalar ? belgeHTML(R, hd, ft) : s1 + s2 + s3);
   $("rp-bas").textContent = R.no + " · " + R.baslik; $("rp-yay").hidden = !(t.taslak && KADI === "mustafa"); $("rp-dur").textContent = t.taslak ? "Taslak — ekip henüz görmüyor" : "";
   $("rp-ov").hidden = false; document.body.style.overflow = "hidden";
 }
+/* serbest kurumsal belge: R.sayfalar = [{bolumler:[{ey, baslik, lead, not, maddeler[], tablo:[{a,b}], kartlar:[{baslik, maddeler[]}]}], imza}] */
+function belgeHTML(R, hd, ft) { const L = x => (x || []).map(s => `<li>${esc(s)}</li>`).join("");
+  const meta = `<div class="meta"><div><span>Hazırlayan</span>${esc(R.hazirlayan || "")}</div><div><span>Tarih</span>${esc(R.tarih || "")}</div><div><span>Belge türü</span>${esc(R.etiket || "")}</div><div><span>Dağıtım</span>Kurucu ortaklar</div></div>`;
+  const bol = b => `${b.ey ? `<div class="ey">${esc(b.ey)}</div>` : ""}${b.baslik ? `<h2>${esc(b.baslik)}</h2>` : ""}${b.lead ? `<p class="lead">${esc(b.lead)}</p>` : ""}${b.not ? `<div class="note">${esc(b.not)}</div>` : ""}
+    ${(b.maddeler || []).length ? `<ol class="bl-ol">${L(b.maddeler)}</ol>` : ""}${(b.tablo || []).length ? `<table>${b.tablo.map(r => `<tr><td>${esc(r.a)}</td><td>${esc(r.b)}</td></tr>`).join("")}</table>` : ""}
+    ${(b.kartlar || []).length ? `<div class="kisi" style="grid-template-columns:repeat(${Math.min(3, b.kartlar.length)},1fr)">${b.kartlar.map(c => `<div class="card"><b class="t">${esc(c.baslik)}</b><ul>${L(c.maddeler)}</ul></div>`).join("")}</div>` : ""}`;
+  const imza = `<div class="sign"><div>Mustafa ALTINTOP<span>Kurucu Ortak · İmza</span></div><div>Fatma Nur TAKIŞ ALTINTOP<span>Kurucu Ortak · İmza</span></div><div>Rumeysa TAKIŞ<span>Kurucu Ortak · İmza</span></div></div>`;
+  return R.sayfalar.map((p, i) => `<section class="rpg">${hd}${i === 0 ? meta : ""}${(p.bolumler || []).map(bol).join("")}${p.imza ? imza : ""}${R.dipnot && i === R.sayfalar.length - 1 ? `<p style="font-size:7pt;color:var(--mut2);margin-top:4mm">${esc(R.dipnot)}</p>` : ""}${ft()}</section>`).join(""); }
 function kisiHTML(k, no) { const L = x => (x || []).map(s => `<li>${esc(s)}</li>`).join("");
   return `<div class="ey">${no} · ${esc(k.rol || "")}</div><h3 style="margin-top:1mm;font-size:16pt">${esc(k.ad)}</h3>${k.not ? `<div class="note">${esc(k.not)}</div>` : ""}
-  <div class="kisi"><div class="card"><b class="t">Ürettikleri</b><ul>${L(k.uretim)}</ul></div><div class="card"><b class="t">Değerlendirme</b><ul>${L(k.deg)}</ul></div></div>`; }
+  <div class="kisi"><div class="card"><b class="t">${esc(k.solB || "Ürettikleri")}</b><ul>${L(k.uretim)}</ul></div><div class="card"><b class="t">${esc(k.sagB || "Değerlendirme")}</b><ul>${L(k.deg)}</ul></div></div>`; }
 $("rp-kapat").onclick = () => { $("rp-ov").hidden = true; document.body.style.overflow = ""; };
 $("rp-pdf").onclick = () => { const eski = document.title, t = toplantilar.find(x => x.id === RPID); if (t && t.rapor) document.title = "Juvemi-" + (t.rapor.no || "rapor"); print(); setTimeout(() => document.title = eski, 500); };
 $("rp-yay").onclick = () => RPID && yayinla(RPID);
