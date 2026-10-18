@@ -99,7 +99,7 @@ const APPS = [
   { id: "toplanti", ad: "Görüntülü Görüşme", renk: "#D06A2C", ik: "toplanti", alt: () => "Jitsi ekip odası" },
   { id: "ekip", ad: "Ekip", renk: "#2F8C8C", ik: "ekipapp", alt: () => ekip.length ? ekip.length + " kurucu ortak" : "Kurucu ortaklar" },
   { id: "butce", ad: "Bütçe & Sermaye", renk: "#7A6CB0", ik: "butce", alt: () => { const s = sermaye.reduce((t, x) => t + (+x.tutar || 0), 0); return s ? "Sermaye " + TL(s) : "Sermaye ve aylık plan"; } },
-  { id: "geri", ad: "Geri Bildirim", renk: "#B5527A", ik: "geri", alt: () => { const n = geri.filter(x => (x.durum || "yeni") === "yeni").length; return n ? n + " yeni kayıt" : "Talepler, öneriler, hatalar"; } },
+  { id: "geri", ad: "Geri Bildirim", renk: "#B5527A", ik: "geri", alt: () => { const n = (geri || []).filter(x => (x.durum || "yeni") === "yeni").length; return n ? n + " yeni kayıt" : "Talepler, öneriler, hatalar"; } },
   { id: "ayarlar", ad: "Ayarlar", renk: "#6B7280", ik: "ayar", sadece: "mustafa", alt: () => ST_SON ? "Depolama %" + ST_SON.pct.toFixed(3) : "Depolama ve sınırlar" }
 ];
 function go(t) { TAB = t; try { localStorage.setItem("juvemi-tab", t); } catch (e) { } history.replaceState(null, "", "#" + t); renderTabs(); scrollTo(0, 0); }
@@ -198,24 +198,37 @@ function renderGenel() {
 /* ---------- görevlerim ---------- */
 let DRAG = null;
 function savePanel() { setTimeout(renderTabs, 0); setDoc(doc(db, "kullanicilar", ME), { ad: MYNAME, gorevler: panel.gorevler }).then(() => flash("Kaydedildi")).catch(() => flash("Kaydedilemedi")); renderTasks(); }
+const altTum = L => (L || []).reduce((s, x) => s.concat([x], altTum(x.altlar)), []);
+function altBul(L, id, ust) { for (const x of L || []) { if (x.id === id) return { x, liste: L, ust }; const r = altBul(x.altlar, id, x); if (r) return r; } return null; }
+function altDuzelt(L) { (L || []).forEach(x => { if ((x.altlar || []).length) { altDuzelt(x.altlar); x.ok = x.altlar.every(z => z.ok); } }); }
+function altLi(L, d) {
+  return `<ul class="alt-ul${d ? " ic" : ""}">${(L || []).map(x => { const C = x.altlar || [], cy = altTum(C).filter(z => z.ok).length, ct = altTum(C).length;
+    return `<li class="${x.ok ? "ok" : ""}" data-a="${esc(x.id)}"><div class="alt-sat"><input type="checkbox" ${x.ok ? "checked" : ""}><span class="alt-ad" contenteditable="true" spellcheck="false" title="Düzenlemek için tıkla">${esc(x.ad)}</span>${ct ? `<span class="alt-say">${cy}/${ct}</span>` : ""}${d < 3 ? `<button type="button" class="alt-art" title="Bunun altına iş ekle">＋</button>` : ""}<button type="button" class="alt-duz" title="Düzenle">✎</button><button type="button" class="alt-sil" title="Sil">✕</button></div>
+    ${C.length ? altLi(C, d + 1) : ""}<form class="alt-ekle alt-ic" hidden><input type="text" placeholder="+ Alt görev ekle" maxlength="140"><button type="submit">Ekle</button></form></li>`; }).join("")}</ul>`;
+}
 function altHTML(t) {
-  const A = t.altlar || [], y = A.filter(x => x.ok).length, yz = A.length ? Math.round(100 * y / A.length) : 0;
-  return `<div class="alt">${A.length ? `<div class="alt-ust"><span>Alt işler</span><b>${y} / ${A.length}</b><div class="alt-bar"><i style="width:${yz}%"></i></div><em>%${yz}</em></div>` : ""}
-  <ul>${A.map(x => `<li class="${x.ok ? "ok" : ""}" data-a="${esc(x.id)}"><input type="checkbox" ${x.ok ? "checked" : ""}><span class="alt-ad" contenteditable="true" spellcheck="false" title="Düzenlemek için tıkla">${esc(x.ad)}</span><button type="button" class="alt-duz" title="Düzenle">✎</button><button type="button" class="alt-sil" title="Sil">✕</button></li>`).join("")}</ul>
-  <form class="alt-ekle"><input type="text" placeholder="+ Alt iş ekle" maxlength="140"><button type="submit">Ekle</button></form></div>`;
+  const T = altTum(t.altlar), y = T.filter(x => x.ok).length, yz = T.length ? Math.round(100 * y / T.length) : 0;
+  return `<div class="alt">${T.length ? `<div class="alt-ust"><span>Alt işler</span><b>${y} / ${T.length}</b><div class="alt-bar"><i style="width:${yz}%"></i></div><em>%${yz}</em></div>` : ""}
+  ${altLi(t.altlar, 0)}
+  <form class="alt-ekle alt-kok"><input type="text" placeholder="+ Alt iş ekle" maxlength="140"><button type="submit">Ekle</button></form></div>`;
 }
 function altBagla(c, t) {
+  const durumGuncelle = () => { altDuzelt(t.altlar); const A = t.altlar || []; if (A.length && A.every(z => z.ok)) t.durum = "bitti"; else if (altTum(A).some(z => z.ok)) t.durum = "devam"; else if (t.durum === "bitti") t.durum = "devam"; };
   c.querySelectorAll(".alt li").forEach(li => {
-    const x = (t.altlar || []).find(z => z.id === li.dataset.a); if (!x) return;
-    li.querySelector("input").onchange = e => { x.ok = e.target.checked; if (t.altlar.length && t.altlar.every(z => z.ok) && t.durum !== "bitti") t.durum = "bitti"; else if (!x.ok && t.durum === "bitti") t.durum = "devam"; else if (x.ok && (t.durum || "acik") === "acik") t.durum = "devam"; savePanel(); };
-    const ad = li.querySelector(".alt-ad");
-    li.querySelector(".alt-duz").onclick = () => { ad.focus(); const r = document.createRange(); r.selectNodeContents(ad); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    const r = altBul(t.altlar, li.dataset.a); if (!r) return; const x = r.x, sat = li.querySelector(":scope > .alt-sat");
+    sat.querySelector("input").onchange = e => { const v = e.target.checked; x.ok = v; altTum(x.altlar).forEach(z => z.ok = v); durumGuncelle(); savePanel(); };
+    const ad = sat.querySelector(".alt-ad");
+    sat.querySelector(".alt-duz").onclick = () => { ad.focus(); const rg = document.createRange(); rg.selectNodeContents(ad); rg.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
     ad.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); ad.blur(); } if (e.key === "Escape") { ad.textContent = x.ad; ad.blur(); } };
     ad.onpaste = e => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain").replace(/\s+/g, " ")); };
     ad.onblur = () => { const v = ad.textContent.trim(); if (!v) { ad.textContent = x.ad; return; } if (v !== x.ad) { x.ad = v; savePanel(); } };
-    li.querySelector(".alt-sil").onclick = () => { t.altlar = t.altlar.filter(z => z !== x); savePanel(); };
+    sat.querySelector(".alt-sil").onclick = () => { r.liste.splice(r.liste.indexOf(x), 1); durumGuncelle(); savePanel(); };
+    const f = li.querySelector(":scope > .alt-ic"), art = sat.querySelector(".alt-art");
+    if (art) art.onclick = () => { f.hidden = !f.hidden; if (!f.hidden) f.querySelector("input").focus(); };
+    f.querySelector("input").id = "alt-" + x.id;
+    f.onsubmit = e => { e.preventDefault(); const v = f.querySelector("input").value.trim(); if (!v) return; (x.altlar = x.altlar || []).push({ id: Date.now().toString(36), ad: v, ok: false }); x.ok = false; durumGuncelle(); savePanel(); setTimeout(() => { const n = $("alt-" + x.id); if (n) { n.closest("form").hidden = false; n.focus(); } }, 60); };
   });
-  const f = c.querySelector(".alt-ekle"), inp = f.querySelector("input");
+  const f = c.querySelector(".alt-kok"), inp = f.querySelector("input");
   inp.id = "alt-" + t.id;
   f.onsubmit = e => { e.preventDefault(); const v = inp.value.trim(); if (!v) return; (t.altlar = t.altlar || []).push({ id: Date.now().toString(36), ad: v, ok: false }); if (t.durum === "bitti") t.durum = "devam"; savePanel(); setTimeout(() => { const n = $("alt-" + t.id); n && n.focus(); }, 50); };
 }
@@ -418,7 +431,7 @@ const FAZLAR = [["f1", "Faz 1 · Dijital başlangıç", "Ekim 2026 – Ocak 2027
 const YDL = { acik: "Planlandı", devam: "Sürüyor", bitti: "Tamamlandı" };
 $("yf-faz").innerHTML = FAZLAR.map(f => `<option value="${f[0]}">${f[1]}</option>`).join("");
 /* ---------- geri bildirim ---------- */
-let geri = [], GTUR = "hepsi", GDUR = "acik", GACIK = null;
+var geri = [], GTUR = "hepsi", GDUR = "acik", GACIK = null;
 const GT = { talep: ["Talep", "🙋"], oneri: ["Öneri", "💡"], hata: ["Hata", "🐞"], diger: ["Diğer", "💬"] };
 const GD = { yeni: "Yeni", inceleniyor: "İnceleniyor", yapiliyor: "Yapılıyor", tamam: "Tamamlandı", red: "Yapılmayacak" };
 const GDS = ["yeni", "inceleniyor", "yapiliyor", "tamam", "red"];
@@ -459,10 +472,15 @@ $("gf-iptal").onclick = () => { $("g-form").hidden = true; };
 $("g-form").onsubmit = e => { e.preventDefault(); const b = $("gf-bas").value.trim(); if (!b) return;
   addDoc(collection(db, "geribildirim"), { tur: $("gf-tur").value, oncelik: $("gf-onc").value, baslik: b, aciklama: $("gf-acik").value.trim(), kadi: KADI, ad: MYNAME, ts: Date.now(), durum: "yeni", oy: [KADI], yorumlar: [] })
     .then(() => { $("g-form").reset(); $("g-form").hidden = true; flash("Gönderildi"); }).catch(() => flash("Gönderilemedi")); };
+let YKIM = (() => { try { return localStorage.getItem("juvemi-ykim") || "hepsi"; } catch (e) { return "hepsi"; } })();
+const KADAD = { mustafa: "Mustafa", fatmanur: "Fatma Nur", rumeysa: "Rumeysa" };
 function renderYol() {
   if ($("yh-form").contains(document.activeElement)) return;
-  const el = $("yh"); if (!yol.length) { el.innerHTML = '<div class="empty">Henüz hedef yok.</div>'; return; }
-  el.innerHTML = FAZLAR.map(([id, ad, ar]) => { const L = yol.filter(x => x.faz === id).sort((a, b) => (a.tarih || "9").localeCompare(b.tarih || "9") || (a.sira || 0) - (b.sira || 0)); if (!L.length) return "";
+  const kisi = YKIM === "benim" ? KADAD[KADI] : YKIM === "hepsi" ? null : YKIM, uy = x => !kisi || (x.sorumlu || "Hepsi") === kisi || (x.sorumlu || "Hepsi") === "Hepsi";
+  $("yh-filtre").innerHTML = [["hepsi", "Tüm ekip"], ["benim", "Benim yol haritam"], ["Mustafa", "Mustafa"], ["Fatma Nur", "Fatma Nur"], ["Rumeysa", "Rumeysa"]].map(([k, ad]) => `<button type="button" data-k="${esc(k)}" class="${YKIM === k ? "on" : ""}">${esc(ad)}<span>${yol.filter(x => { const kk = k === "benim" ? KADAD[KADI] : k === "hepsi" ? null : k; return !kk || (x.sorumlu || "Hepsi") === kk || (x.sorumlu || "Hepsi") === "Hepsi"; }).length}</span></button>`).join("");
+  $("yh-filtre").querySelectorAll("button").forEach(b => b.onclick = () => { YKIM = b.dataset.k; try { localStorage.setItem("juvemi-ykim", YKIM); } catch (e) { } renderYol(); });
+  const el = $("yh"); if (!yol.filter(uy).length) { el.innerHTML = '<div class="empty">' + (yol.length ? "Bu filtrede hedef yok." : "Henüz hedef yok.") + '</div>'; return; }
+  el.innerHTML = FAZLAR.map(([id, ad, ar]) => { const L = yol.filter(x => x.faz === id && uy(x)).sort((a, b) => (a.tarih || "9").localeCompare(b.tarih || "9") || (a.sira || 0) - (b.sira || 0)); if (!L.length) return "";
     const b = L.filter(x => x.durum === "bitti").length;
     return `<div class="faz"><div class="faz-h"><b>${esc(ad)}</b><span>${esc(ar)} · ${b}/${L.length} tamam</span></div><div class="faz-bar"><i style="width:${100 * b / L.length}%"></i></div>
       <div class="yh-list">${L.map(x => `<div class="yi ${esc(x.durum || "acik")}" data-id="${esc(x.id)}"><b>${esc(x.baslik)}</b><button type="button" class="pill" data-s="${esc(x.durum || "acik")}">${YDL[x.durum || "acik"]}</button>${x.aciklama ? `<p>${esc(x.aciklama)}</p>` : ""}<div class="meta">${x.sorumlu ? `<span>👤 ${esc(x.sorumlu)}</span>` : ""}${x.tarih ? `<span>🎯 ${esc(new Date(x.tarih + "T12:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" }))}</span>` : ""}</div></div>`).join("")}</div></div>`; }).join("");
