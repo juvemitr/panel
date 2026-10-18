@@ -208,19 +208,24 @@ function renderTasks() {
     const td = c.querySelector(".tdate"); td.onchange = () => { t.tarih = td.value; savePanel(); };
     const ta = c.querySelector("textarea"); ta.onchange = () => { t.not = ta.value; savePanel(); };
     const del = c.querySelector(".del"); del.onclick = () => { if (!del.classList.contains("sure")) { del.classList.add("sure"); del.textContent = "Emin misin? Silmek için tekrar tıkla"; setTimeout(() => { del.classList.remove("sure"); del.textContent = "Sil"; }, 4000); return; } panel.gorevler = panel.gorevler.filter(x => x.id !== t.id); savePanel(); };
-    c.querySelector(".num").onpointerdown = e => {
-      e.preventDefault(); DRAG = t.id; c.classList.add("dragging"); document.body.style.userSelect = "none"; let tgt = null, top = true;
+    c.onpointerdown = e => {
+      if (e.button > 0 || e.target.closest("input,textarea,button,a")) return;
+      if (e.pointerType !== "mouse" && !e.target.closest(".num")) return;
+      e.preventDefault(); const x0 = e.clientY; let basladi = false, tgt = null, top = true;
+      const bas = () => { basladi = true; DRAG = t.id; c.classList.add("dragging"); document.body.style.userSelect = "none"; };
+      if (e.pointerType !== "mouse") bas();
       const mv = ev => {
-        document.querySelectorAll(".task").forEach(x => x.classList.remove("over-top", "over-bot")); const el2 = document.elementFromPoint(ev.clientX, ev.clientY), k = el2 && el2.closest(".task"); tgt = null;
+        if (!basladi) { if (Math.abs(ev.clientY - x0) < 6) return; bas(); }
+        ev.preventDefault(); document.querySelectorAll(".task").forEach(x => x.classList.remove("over-top", "over-bot")); const el2 = document.elementFromPoint(ev.clientX, ev.clientY), k = el2 && el2.closest(".task"); tgt = null;
         if (k && k !== c) { const r = k.getBoundingClientRect(); top = ev.clientY < r.top + r.height / 2; k.classList.add(top ? "over-top" : "over-bot"); tgt = k.dataset.id; }
         if (ev.clientY < 60) scrollBy(0, -12); else if (ev.clientY > innerHeight - 60) scrollBy(0, 12);
       };
       const up = () => {
-        removeEventListener("pointermove", mv); removeEventListener("pointerup", up); document.body.style.userSelect = ""; DRAG = null;
+        removeEventListener("pointermove", mv); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); if (!basladi) return; document.body.style.userSelect = ""; DRAG = null;
         document.querySelectorAll(".task").forEach(x => x.classList.remove("dragging", "over-top", "over-bot"));
         if (tgt) { const G = panel.gorevler, [m] = G.splice(G.findIndex(x => x.id === t.id), 1); let to = G.findIndex(x => x.id === tgt); if (!top) to++; G.splice(to, 0, m); savePanel(); }
       };
-      addEventListener("pointermove", mv); addEventListener("pointerup", up);
+      addEventListener("pointermove", mv, { passive: false }); addEventListener("pointerup", up); addEventListener("pointercancel", up);
     };
     el.appendChild(c);
   });
