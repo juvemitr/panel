@@ -414,7 +414,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
 <div id="intro" aria-hidden="true"><style>
-#intro{position:fixed;inset:0;z-index:10000;background:var(--bg);display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:opacity .6s ease,transform .6s ease}
+#intro{animation:jvKac .4s 7s forwards;position:fixed;inset:0;z-index:10000;background:var(--bg);display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:opacity .6s ease,transform .6s ease}
 #intro.bitti{opacity:0;transform:scale(1.04);pointer-events:none}
 #intro .sah{position:relative;font-family:var(--display);font-weight:600;font-size:clamp(56px,12vw,140px);letter-spacing:-.02em;line-height:1}
 #intro .lg{display:flex;align-items:baseline;color:var(--ink)}
@@ -424,7 +424,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 #intro .gol{position:absolute;left:0;top:0;width:.3em;height:.06em;margin:-.03em 0 0 -.15em;border-radius:50%;background:color-mix(in srgb,var(--ink) 18%,transparent);opacity:0}
 #intro .tg{position:absolute;left:0;right:0;top:calc(100% + .45em);text-align:center;font-family:var(--body);font-weight:500;font-size:.13em;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);opacity:0;white-space:nowrap}
 #intro .bas{position:absolute;bottom:12vh;left:0;right:0;text-align:center;font-family:var(--body);font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);animation:jvP 1.6s ease-in-out infinite}
-@keyframes jvP{50%{opacity:.35}}
+@keyframes jvP{50%{opacity:.35}}@keyframes jvKac{to{opacity:0;visibility:hidden;pointer-events:none}}
 </style>
 <div class="sah"><div class="lg"><span>J</span><span>u</span><span>v</span><span>é</span><span class="m">m</span><span class="i">ı</span></div><i class="gol"></i><i class="top"></i><div class="tg" lang="en">little things for growing minds</div></div>
 <script>(function(){var el=document.getElementById("intro");var gor=false;try{gor=sessionStorage.getItem("jv-intro")==="1"}catch(e){}
@@ -661,6 +661,6 @@ setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
 </div>
 </div>
 
-<script>window.JV="20261018134256";</script>
-<script type="module" src="app.js?v=20261018134256"></script>
+<script>window.JV="20261018134448";</script>
+<script type="module" src="app.js?v=20261018134448"></script>
 </body></html>
