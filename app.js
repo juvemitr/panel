@@ -489,10 +489,10 @@ function yayinla(id) { setDoc(doc(db, "toplantilar", id), { taslak: false, yayin
 function raporAc(id) {
   const t = toplantilar.find(x => x.id === id); if (!t || !t.rapor) return flash("Bu kayıtta rapor yok");
   RPID = id; const R = t.rapor, L = x => (x || []).map(s => `<li>${esc(s)}</li>`).join("");
-  const hd = `<img class="wm" src="mi.png" alt=""><div class="kenar">JUVÉMİ · little things for growing minds</div><div class="hd"><img class="lg2" src="logo-tam.png" alt="Juvémi"><span>JUVÉMİ · KURUMSAL BELGE · ${esc(R.no || "")}</span><span>${esc(R.tarih || "")}</span></div>`;
+  const hd = `<img class="wm" src="mi.png" alt=""><div class="kenar">JUVÉMİ · little things for growing minds</div><div class="hd"><img class="lg2" src="logo-j.png" alt="Juvémi"><span>JUVÉMİ · KURUMSAL BELGE · ${esc(R.no || "")}</span><span>${esc(R.tarih || "")}</span></div>`;
   let sayfa = 0; const ft = () => `<div class="ft"><span>Juvémi · ${esc(R.no || "")} · ${esc(R.baslik || "")}</span><span>${++sayfa}</span></div>`;
   const kapak = `<section class="rpg kapak"><div class="c" style="width:150mm;height:150mm;background:var(--red);right:-42mm;top:-75mm"></div><div class="c" style="width:82mm;height:82mm;background:var(--yel);right:32mm;top:73mm"></div><div class="c" style="width:60mm;height:60mm;background:var(--pink);left:-17mm;bottom:-23mm"></div><div class="c" style="width:23mm;height:23mm;background:#e8e2da;right:14mm;bottom:30mm"></div>
-    <div class="lgk"><img src="logo-acik.png" alt="Juvémi"><small>little things for growing minds</small></div>
+    <div class="lgk"><img src="logo-j-acik.png" alt="Juvémi"><small>little things for growing minds</small></div>
     <div class="ct"><span class="pill">${esc(R.etiket || "KURUMSAL RAPOR")}</span><h1>${esc(R.baslik || "")}</h1><div class="sub">${esc(R.alt || "")}</div><div class="tags">${(R.etiketler || []).map(x => `<span>${esc(x)}</span>`).join("")}</div></div>
     <div class="cf"><span>Juvémi · Şirket içi · Gizli</span><span>Belge No: ${esc(R.no || "")}</span></div></section>`;
   const s1 = `<section class="rpg">${hd}<div class="meta"><div><span>Hazırlayan</span>${esc(R.hazirlayan || "")}</div><div><span>Dönem</span>${esc(R.donem || "")}</div><div><span>Kaynak</span>${esc(R.kaynak || "")}</div><div><span>Dağıtım</span>Kurucu ortaklar</div></div>
