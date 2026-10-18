@@ -51,6 +51,9 @@ body.suruklen,body.suruklen *{cursor:grabbing!important}
 .alt-sil{border:0;background:none;color:var(--muted);cursor:pointer;opacity:0;font-size:12px;padding:2px 6px}.alt li:hover .alt-sil{opacity:1}@media (hover:none){.alt-sil{opacity:.6}}
 .alt-ekle{display:flex;gap:6px;margin-top:4px}.alt-ekle input{flex:1;font-size:13px;padding:6px 10px;border:1px dashed var(--line);background:transparent}.alt-ekle input:focus{border-style:solid}.alt-ekle button{font-size:12px;padding:4px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 @media (max-width:560px){.alt{grid-column:1/3}}
+.task .ed{outline:none;border-radius:6px;padding:1px 5px;margin-left:-5px;cursor:text}.task .ed:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}.task .ed:focus{background:var(--surface);box-shadow:0 0 0 1.5px var(--mustard)}
+.task .ed:empty::before{content:attr(data-ph);color:var(--muted);opacity:.7}.task .desc.ed:empty{font-size:13px}
+.task .note{border:1px dashed var(--line);background:transparent;resize:none;overflow:hidden}.task .note:focus{border-style:solid;border-color:var(--mustard);outline:none}
 .task.done{opacity:.65}.task.dragging{opacity:.4}.task.over-top{box-shadow:0 -3px 0 var(--mustard)}.task.over-bot{box-shadow:0 3px 0 var(--mustard)}
 .num{font-family:var(--display);font-weight:700;font-size:22px;color:var(--slate);line-height:1.1;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center}
 .num small{font:700 11px var(--body);color:var(--muted)}
@@ -577,6 +580,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 </div>
 
-<script>window.JV="20261018130313";</script>
-<script type="module" src="app.js?v=20261018130313"></script>
+<script>window.JV="20261018130612";</script>
+<script type="module" src="app.js?v=20261018130612"></script>
 </body></html>

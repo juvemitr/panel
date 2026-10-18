@@ -224,9 +224,16 @@ function renderTasks() {
   const focused = document.activeElement && document.activeElement.id; el.innerHTML = "";
   g.forEach((t, i) => {
     const s = t.durum || "acik", c = document.createElement("article"); c.className = "task" + (s === "bitti" ? " done" : ""); c.dataset.id = t.id;
-    c.innerHTML = `<div class="num" title="Tutup sürükle">${i + 1}<small>⋮⋮</small></div><div class="ttl">${esc(t.baslik)}</div><button class="pill" data-s="${s}" type="button">${LBL[s]}</button>${t.aciklama ? `<div class="desc">${esc(t.aciklama)}</div>` : ""}${altHTML(t)}<input type="date" class="tdate" value="${esc(t.tarih || "")}" aria-label="Tarih" title="Tarih (takvimde görünür)"><textarea class="note" id="n-${esc(t.id)}" placeholder="Not ekle…">${esc(t.not || "")}</textarea><button class="del" type="button">Sil</button>`;
+    c.innerHTML = `<div class="num" title="Tutup sürükle">${i + 1}<small>⋮⋮</small></div><div class="ttl ed" contenteditable="true" spellcheck="false" data-k="baslik" data-ph="Görev başlığı" title="Düzenlemek için tıkla">${esc(t.baslik)}</div><button class="pill" data-s="${s}" type="button">${LBL[s]}</button><div class="desc ed" contenteditable="true" spellcheck="false" data-k="aciklama" data-ph="+ Açıklama ekle" title="Düzenlemek için tıkla">${esc(t.aciklama || "")}</div>${altHTML(t)}<input type="date" class="tdate" value="${esc(t.tarih || "")}" aria-label="Tarih" title="Tarih (takvimde görünür)"><textarea class="note" id="n-${esc(t.id)}" placeholder="Not ekle…">${esc(t.not || "")}</textarea><button class="del" type="button">Sil</button>`;
     c.querySelector(".pill").onclick = () => { t.durum = ST[(ST.indexOf(s) + 1) % 3]; savePanel(); };
     altBagla(c, t);
+    c.querySelectorAll(".ed").forEach(ed => {
+      const k = ed.dataset.k;
+      ed.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); ed.blur(); } if (e.key === "Escape") { ed.textContent = t[k] || ""; ed.blur(); } };
+      ed.onpaste = e => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain").replace(/\s+/g, " ")); };
+      ed.onblur = () => { const v = ed.textContent.trim(); if (k === "baslik" && !v) { ed.textContent = t.baslik; return; } if (!v) ed.innerHTML = ""; if (v !== (t[k] || "")) { t[k] = v; savePanel(); } };
+    });
+    const nt = c.querySelector(".note"), boy = () => { nt.style.height = "auto"; nt.style.height = Math.max(38, nt.scrollHeight + 2) + "px"; }; nt.oninput = boy; requestAnimationFrame(boy);
     const td = c.querySelector(".tdate"); td.onchange = () => { t.tarih = td.value; savePanel(); };
     const ta = c.querySelector("textarea"); ta.onchange = () => { t.not = ta.value; savePanel(); };
     const del = c.querySelector(".del"); del.onclick = () => { if (!del.classList.contains("sure")) { del.classList.add("sure"); del.textContent = "Emin misin? Silmek için tekrar tıkla"; setTimeout(() => { del.classList.remove("sure"); del.textContent = "Sil"; }, 4000); return; } panel.gorevler = panel.gorevler.filter(x => x.id !== t.id); savePanel(); };
@@ -668,5 +675,5 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "gunluk"), orderBy("ts", "desc")), s => { gunluk = s.docs.map(d => d.data()); renderGenel(); }));
-  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && (document.activeElement.tagName === "TEXTAREA" || (document.activeElement.closest(".alt-ekle") && document.activeElement.value) || document.activeElement.classList.contains("alt-ad")))) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
+  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && (document.activeElement.tagName === "TEXTAREA" || (document.activeElement.closest(".alt-ekle") && document.activeElement.value) || document.activeElement.isContentEditable))) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
 }
