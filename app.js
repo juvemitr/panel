@@ -211,19 +211,29 @@ function renderTasks() {
     c.onpointerdown = e => {
       if (e.button > 0 || e.target.closest("input,textarea,button,a")) return;
       if (e.pointerType !== "mouse" && !e.target.closest(".num")) return;
-      e.preventDefault(); const x0 = e.clientY; let basladi = false, tgt = null, top = true;
-      const bas = () => { basladi = true; DRAG = t.id; c.classList.add("dragging"); document.body.style.userSelect = "none"; };
+      e.preventDefault(); const y0 = e.clientY, x0 = e.clientX; let basladi = false, hayalet = null, dx = 0, dy = 0;
+      const bas = () => {
+        basladi = true; DRAG = t.id; document.body.style.userSelect = "none"; document.body.classList.add("suruklen");
+        const r = c.getBoundingClientRect(); dx = x0 - r.left; dy = y0 - r.top;
+        hayalet = c.cloneNode(true); hayalet.classList.add("hayalet"); hayalet.style.width = r.width + "px"; hayalet.style.left = r.left + "px"; hayalet.style.top = r.top + "px";
+        document.body.appendChild(hayalet); c.style.height = r.height + "px"; c.classList.add("yuva");
+      };
       if (e.pointerType !== "mouse") bas();
       const mv = ev => {
-        if (!basladi) { if (Math.abs(ev.clientY - x0) < 6) return; bas(); }
-        ev.preventDefault(); document.querySelectorAll(".task").forEach(x => x.classList.remove("over-top", "over-bot")); const el2 = document.elementFromPoint(ev.clientX, ev.clientY), k = el2 && el2.closest(".task"); tgt = null;
-        if (k && k !== c) { const r = k.getBoundingClientRect(); top = ev.clientY < r.top + r.height / 2; k.classList.add(top ? "over-top" : "over-bot"); tgt = k.dataset.id; }
-        if (ev.clientY < 60) scrollBy(0, -12); else if (ev.clientY > innerHeight - 60) scrollBy(0, 12);
+        if (!basladi) { if (Math.abs(ev.clientY - y0) < 5) return; bas(); }
+        ev.preventDefault(); hayalet.style.left = (ev.clientX - dx) + "px"; hayalet.style.top = (ev.clientY - dy) + "px";
+        const kart = [...el.querySelectorAll(".task:not(.yuva)")];
+        let once = null; for (const k of kart) { const r = k.getBoundingClientRect(); if (ev.clientY < r.top + r.height / 2) { once = k; break; } }
+        if (once) { if (c.nextElementSibling !== once) el.insertBefore(c, once); } else if (el.lastElementChild !== c) el.appendChild(c);
+        if (ev.clientY < 70) scrollBy(0, -14); else if (ev.clientY > innerHeight - 70) scrollBy(0, 14);
       };
       const up = () => {
-        removeEventListener("pointermove", mv); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); if (!basladi) return; document.body.style.userSelect = ""; DRAG = null;
-        document.querySelectorAll(".task").forEach(x => x.classList.remove("dragging", "over-top", "over-bot"));
-        if (tgt) { const G = panel.gorevler, [m] = G.splice(G.findIndex(x => x.id === t.id), 1); let to = G.findIndex(x => x.id === tgt); if (!top) to++; G.splice(to, 0, m); savePanel(); }
+        removeEventListener("pointermove", mv); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); if (!basladi) return;
+        document.body.style.userSelect = ""; document.body.classList.remove("suruklen"); DRAG = null;
+        const r = c.getBoundingClientRect(); hayalet.style.transition = "left .15s, top .15s, transform .15s, box-shadow .15s"; hayalet.style.left = r.left + "px"; hayalet.style.top = r.top + "px"; hayalet.style.transform = "none";
+        setTimeout(() => { hayalet.remove(); c.classList.remove("yuva"); c.style.height = "";
+          const sira = [...el.querySelectorAll(".task")].map(x => x.dataset.id), eski = panel.gorevler.map(x => x.id).join();
+          if (sira.join() !== eski) { panel.gorevler.sort((p, q) => sira.indexOf(p.id) - sira.indexOf(q.id)); savePanel(); } else renderTasks(); }, 160);
       };
       addEventListener("pointermove", mv, { passive: false }); addEventListener("pointerup", up); addEventListener("pointercancel", up);
     };
