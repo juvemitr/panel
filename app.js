@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, EmailAuthProvider, reauthenticateWithCredential, updatePassword, GoogleAuthProvider, linkWithPopup, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, deleteDoc, getDoc, query, orderBy, limit, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
@@ -244,11 +244,12 @@ function renderTasks() {
   const focused = document.activeElement && document.activeElement.id;
   const say = id => g.filter(t => alanOf(t) === id && t.durum !== "bitti").length;
   $("gl-ad").textContent = A[0].ad; $("gl-say").textContent = say(A[0].id) + " açık";
-  $("gr-chips").innerHTML = others.map((a, i) => `<button type="button" class="achip" data-alan="${esc(a.id)}" aria-pressed="${a.id === SAG}"><i style="background:${ARENK[(i + 1) % ARENK.length]}"></i><span>${esc(a.ad)}</span><small>${say(a.id)}</small></button>`).join("") + `<button type="button" class="achip add" id="gr-addbtn">+ Alan ekle</button>`;
+  $("gr-chips").innerHTML = others.map((a, i) => `<button type="button" class="achip" data-alan="${esc(a.id)}" aria-pressed="${a.id === SAG}"><i style="background:${ARENK[(i + 1) % ARENK.length]}"></i><span>${esc(a.ad)}</span><small>${say(a.id)}</small></button>${a.id === SAG ? `<button type="button" class="achip mini" data-duz="${esc(a.id)}" title="Adını değiştir">✎</button><button type="button" class="achip mini sil" data-sil="${esc(a.id)}" title="Bu alanı sil">✕ Sil</button>` : ""}`).join("") + `<button type="button" class="achip add" id="gr-addbtn">+ Alan ekle</button>`;
   $("gr-chips").querySelectorAll(".achip[data-alan]").forEach(c => {
-    c.onclick = () => { if (c.dataset.alan === SAG) return alanDuz(c.dataset.alan); SAG = c.dataset.alan; try { localStorage.setItem("juvemi-sag", SAG); } catch (e) { } renderTasks(); };
-    c.title = "Seç · seçiliyken tekrar tıkla: adını değiştir / sil";
+    c.onclick = () => { SAG = c.dataset.alan; try { localStorage.setItem("juvemi-sag", SAG); } catch (e) { } renderTasks(); };
   });
+  $("gr-chips").querySelectorAll("[data-duz]").forEach(b => b.onclick = () => alanDuz(b.dataset.duz, false));
+  $("gr-chips").querySelectorAll("[data-sil]").forEach(b => b.onclick = () => alanDuz(b.dataset.sil, true));
   $("gr-addbtn").onclick = () => { const f = $("gr-addf"); f.hidden = !f.hidden; if (!f.hidden) $("gr-addin").focus(); };
   $("add-alan").innerHTML = A.map(a => `<option value="${esc(a.id)}">${esc(a.ad)}</option>`).join(""); if (!$("add-alan").dataset.dok) $("add-alan").value = A[0].id;
   [["tasks", A[0].id], ["tasks2", SAG]].forEach(([eid, aid]) => { const el = $(eid); el.innerHTML = ""; el.dataset.alan = aid || "";
@@ -258,10 +259,10 @@ function renderTasks() {
     L.forEach((t, i) => kartCiz(t, i, el)); });
   if (focused && $(focused)) $(focused).focus();
 }
-function alanDuz(id) {
+function alanDuz(id, sil) {
   const A = alanlar(), a = A.find(x => x.id === id); if (!a) return;
-  const v = prompt(`"${a.ad}" alanının yeni adı (silmek için boş bırak):`, a.ad); if (v === null) return;
-  if (v.trim()) { a.ad = v.trim(); savePanel(); return; }
+  if (!sil) { const v = prompt(`"${a.ad}" alanının yeni adı:`, a.ad); if (v && v.trim()) { a.ad = v.trim(); savePanel(); } return; }
+  const n0 = (panel.gorevler || []).filter(t => alanOf(t) === id).length; if (!n0 && !confirm(`"${a.ad}" alanı silinsin mi?`)) return;
   const n = (panel.gorevler || []).filter(t => alanOf(t) === id).length;
   if (n && !confirm(`${n} görev ${A[0].ad} alanına taşınacak. Silinsin mi?`)) return;
   panel.gorevler.forEach(t => { if (alanOf(t) === id) t.alan = A[0].id; }); panel.alanlar = A.filter(x => x.id !== id); SAG = null; savePanel();
@@ -531,6 +532,40 @@ $("yf-sil").onclick = () => { const s = $("yf-sil"); if (!s.classList.contains("
 $("yh-form").onsubmit = e => { e.preventDefault(); const d = { faz: $("yf-faz").value, sorumlu: $("yf-kim").value, tarih: $("yf-tarih").value, durum: $("yf-durum").value, baslik: $("yf-baslik").value.trim(), aciklama: $("yf-acik").value.trim(), duzenleyen: MYNAME, ts: Date.now() };
   (YHEDIT ? setDoc(doc(db, "yolharitasi", YHEDIT), d, { merge: true }) : addDoc(collection(db, "yolharitasi"), d)).then(() => { $("yh-form").hidden = true; YHEDIT = null; flash("Kaydedildi"); renderYol(); }).catch(() => flash("Kaydedilemedi")); };
 
+/* ---------- Drive ---------- */
+let GTOK = null, GTOK_T = 0;
+let GTOKP = null;
+function driveToken() { if (GTOK && Date.now() - GTOK_T < 50 * 60e3) return Promise.resolve(GTOK); if (!GTOKP) GTOKP = driveToken0().finally(() => GTOKP = null); return GTOKP; }
+async function driveToken0() {
+  const p = new GoogleAuthProvider(); p.addScope("https://www.googleapis.com/auth/drive.file"); p.setCustomParameters({ prompt: "select_account" });
+  const u = auth.currentUser, gbagli = (u.providerData || []).some(x => x.providerId === "google.com");
+  let r; try { r = gbagli ? await reauthenticateWithPopup(u, p) : await linkWithPopup(u, p); }
+  catch (e) { if (e.code === "auth/credential-already-in-use" || e.code === "auth/provider-already-linked") r = await reauthenticateWithPopup(u, p); else throw e; }
+  GTOK = GoogleAuthProvider.credentialFromResult(r).accessToken; GTOK_T = Date.now(); return GTOK;
+}
+async function driveKlasor(tok) {
+  const H = { Authorization: "Bearer " + tok }, ad = "Juvémi Toplantı Tutanakları";
+  const q = encodeURIComponent(`name='${ad}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const s = await (await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`, { headers: H })).json();
+  if (s.files && s.files.length) return s.files[0].id;
+  const c = await (await fetch("https://www.googleapis.com/drive/v3/files?fields=id", { method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ name: ad, mimeType: "application/vnd.google-apps.folder" }) })).json();
+  if (!c.id) throw new Error("klasör"); return c.id;
+}
+async function driveYukle(blob, ad) {
+  const tok = await driveToken(), kl = await driveKlasor(tok), fd = new FormData();
+  fd.append("metadata", new Blob([JSON.stringify({ name: ad, parents: [kl] })], { type: "application/json" })); fd.append("file", blob);
+  const r = await (await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", { method: "POST", headers: { Authorization: "Bearer " + tok }, body: fd })).json();
+  if (!r.webViewLink) throw new Error("yükleme"); return r.webViewLink;
+}
+function driveHata(e) { const c = e && e.code; return c === "auth/operation-not-allowed" ? "Firebase'de Google girişi kapalı — Authentication › Sign-in method › Google'ı aç" : c === "auth/unauthorized-domain" ? "Firebase › Authentication › Settings › Authorized domains'e juvemitr.github.io ekle" : c === "auth/popup-blocked" ? "Açılır pencere engellendi, izin verip tekrar dene" : c === "auth/popup-closed-by-user" ? "Google penceresi kapatıldı" : "Drive'a yüklenemedi"; }
+async function tutanakDrive(id) {
+  const t = toplantilar.find(x => x.id === id); if (!t || !t.tutanak) return;
+  flash("Drive'a yükleniyor…");
+  try { await driveToken(); const b = await (await fetch(t.tutanak.veri)).blob(), link = await driveYukle(b, t.tarih + " · " + t.tutanak.ad);
+    await setDoc(doc(db, "toplantilar", id), { tutanak: { ...t.tutanak, drive: link } }, { merge: true }); flash("Drive'a kaydedildi"); }
+  catch (e) { flash(driveHata(e)); }
+}
+
 /* ---------- toplantılar ---------- */
 const ORTAKLAR = [["mustafa", "Mustafa"], ["fatmanur", "Fatma Nur"], ["rumeysa", "Rumeysa"]];
 const lnk = u => /^https?:\/\//.test(u || "") ? u : "";
@@ -593,6 +628,7 @@ function renderTp() {
   el.innerHTML = TL2.map(t => { const d = new Date(t.tarih + "T12:00"), U = t.uretimler || {};
     return `<article class="tp${TPACIK === t.id ? " open" : ""}" data-id="${esc(t.id)}">
       <button type="button" class="tp-h"><span class="tp-date"><b>${d.getDate()}</b><span>${esc(AYLAR[d.getMonth()].slice(0, 3))}</span></span><span class="t"><b>${esc(t.baslik || "Toplantı")}${t.taslak ? '<span class="tp-taslak">Taslak · sadece sen</span>' : ""}</b><div>${esc((t.ozet || "").split("\n")[0])}</div></span><span class="ch">${svg("chev", 18)}</span></button>
+      ${t.tutanak ? `<div class="tp-q"><button type="button" class="btn tp-tut">📎 Tutanağı aç · ${esc(t.tutanak.ad)}</button>${t.tutanak.drive ? `<a class="lnk" href="${esc(t.tutanak.drive)}" target="_blank" rel="noopener">Drive'da aç ↗</a>` : `<button type="button" class="m-edit tp-drv">Drive'a kaydet</button>`}</div>` : ""}
       <div class="tp-b">
         ${t.ozet ? `<div><h3>Özet</h3><p>${esc(t.ozet)}</p></div>` : ""}
         <div><h3>Haftalık üretimler</h3><div class="tp-u">${ORTAKLAR.map(([k, ad]) => { const u = U[k] || {}, m = ekip.find(x => x.id === k) || { ad };
@@ -602,11 +638,12 @@ function renderTp() {
             ${lnk(u.link) ? `<a href="${esc(u.link)}" target="_blank" rel="noopener">Dosyaları aç ↗</a>` : ""}</div>`; }).join("")}</div></div>
         ${(t.kararlar || []).length ? `<div><h3>Alınan kararlar</h3><ul class="tp-ul">${t.kararlar.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
         ${(t.aksiyonlar || []).length ? `<div><h3>Aksiyonlar</h3><ul class="tp-ul">${t.aksiyonlar.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-        <div class="tp-act">${t.tutanak ? `<button type="button" class="btn tp-tut">📎 Tutanak: ${esc(t.tutanak.ad)}</button>` : ""}${t.rapor ? `<button type="button" class="btn tp-rp">📄 Raporu aç (PDF)</button>` : ""}${t.taslak && KADI === "mustafa" ? `<button type="button" class="btn dark tp-yay">Yayınla</button>` : ""}${lnk(t.drive) ? `<a class="lnk" href="${esc(t.drive)}" target="_blank" rel="noopener">Bu haftanın Drive klasörü ↗</a>` : ""}<button type="button" class="m-edit tp-duz">Düzenle</button><button type="button" class="del tp-sil">Sil</button><span class="muted" style="margin-left:auto;font-size:12px">${esc(t.ekleyen ? "Kaydeden: " + t.ekleyen : "")}</span></div>
+        <div class="tp-act">${t.rapor ? `<button type="button" class="btn tp-rp">📄 Raporu aç (PDF)</button>` : ""}${t.taslak && KADI === "mustafa" ? `<button type="button" class="btn dark tp-yay">Yayınla</button>` : ""}${lnk(t.drive) ? `<a class="lnk" href="${esc(t.drive)}" target="_blank" rel="noopener">Bu haftanın Drive klasörü ↗</a>` : ""}<button type="button" class="m-edit tp-duz">Düzenle</button><button type="button" class="del tp-sil">Sil</button><span class="muted" style="margin-left:auto;font-size:12px">${esc(t.ekleyen ? "Kaydeden: " + t.ekleyen : "")}</span></div>
       </div></article>`; }).join("");
   el.querySelectorAll(".tp").forEach(c => { const id = c.dataset.id;
     c.querySelector(".tp-h").onclick = () => { TPACIK = TPACIK === id ? null : id; renderTp(); };
     const rb = c.querySelector(".tp-rp"); if (rb) rb.onclick = () => raporAc(id);
+    const dv = c.querySelector(".tp-drv"); if (dv) dv.onclick = () => tutanakDrive(id);
     const tb = c.querySelector(".tp-tut"); if (tb) tb.onclick = async () => { const T = toplantilar.find(x => x.id === id).tutanak; try { const b = await (await fetch(T.veri)).blob(), u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; if (b.type === "application/pdf" || b.type.startsWith("image/")) a.target = "_blank"; else a.download = T.ad; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 6e4); } catch (er) { flash("Dosya açılamadı"); } };
     const yb = c.querySelector(".tp-yay"); if (yb) yb.onclick = () => yayinla(id);
     c.querySelector(".tp-duz").onclick = () => tpForm(toplantilar.find(x => x.id === id));
@@ -625,7 +662,7 @@ function tpForm(t) {
 $("tp-yeni").onclick = () => tpForm(null);
 $("tp-tutanak").onclick = () => { tpForm(null); $("tf-baslik").value = "Toplantı tutanağı"; $("tf-dosya").click(); };
 $("tf-iptal").onclick = () => { $("tp-form").hidden = true; TPEDIT = null; renderTp(); };
-$("tp-form").onsubmit = async e => { e.preventDefault();
+$("tp-form").onsubmit = async e => { e.preventDefault(); if ($("tf-dosya").files[0]) driveToken().catch(() => { });
   const satir = id => $(id).value.split("\n").map(s => s.trim()).filter(Boolean), U = {};
   $("tf-kisiler").querySelectorAll(".tp-kisi").forEach(c => U[c.dataset.k] = { yapilan: c.querySelector(".k-y").value.trim(), degerlendirme: c.querySelector(".k-d").value.trim(), link: c.querySelector(".k-l").value.trim() });
   const f = $("tf-dosya").files[0], eskiT = TPEDIT && (toplantilar.find(x => x.id === TPEDIT) || {}).tutanak;
@@ -633,7 +670,8 @@ $("tp-form").onsubmit = async e => { e.preventDefault();
   const tutanak = f ? { ad: f.name, boyut: f.size, veri: await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); }) } : (eskiT || null);
   const d = { tarih: $("tf-tarih").value, baslik: $("tf-baslik").value.trim(), drive: $("tf-drive").value.trim(), ozet: $("tf-ozet").value.trim(), kararlar: satir("tf-karar"), aksiyonlar: satir("tf-aksiyon"), uretimler: U, ekleyen: MYNAME, ts: Date.now() }; if (tutanak) d.tutanak = tutanak;
   const p = TPEDIT ? setDoc(doc(db, "toplantilar", TPEDIT), d) : addDoc(collection(db, "toplantilar"), d);
-  p.then(r => { TPACIK = TPEDIT || (r && r.id) || null; TPEDIT = null; $("tp-form").hidden = true; flash("Toplantı kaydedildi"); renderTp(); }).catch(() => flash("Kaydedilemedi"));
+  const yeniDosya = !!f;
+  p.then(r => { const kid = TPEDIT || (r && r.id); if (yeniDosya && kid) setTimeout(() => tutanakDrive(kid), 1500); TPACIK = kid || null; TPEDIT = null; $("tp-form").hidden = true; flash("Toplantı kaydedildi"); renderTp(); }).catch(() => flash("Kaydedilemedi"));
 };
 $("tp-drivedeg").onclick = () => { const f = $("tp-drivedeg"); if (f.dataset.on) return; f.dataset.on = 1;
   const box = document.createElement("form"); box.style.cssText = "display:flex;gap:8px;width:100%;margin-top:8px"; box.innerHTML = '<input type="url" placeholder="https://drive.google.com/drive/folders/…" style="flex:1" required><button class="btn">Kaydet</button>';

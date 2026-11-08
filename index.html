@@ -374,6 +374,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .tp-date b{display:block;font:800 20px var(--body);line-height:1}.tp-date span{font:700 11px var(--body);color:var(--muted);text-transform:uppercase}
 .tp-h .t{flex:1;min-width:0}.tp-h .t b{font-size:16px}.tp-h .t div{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tp-h .ch{color:var(--muted);transition:transform .2s}.tp.open .tp-h .ch{transform:rotate(180deg)}
+.tp-q{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:0 18px 14px 82px}.tp-q .btn{padding:7px 14px;font-size:13px}@media (max-width:560px){.tp-q{padding-left:18px}}
+.achip.mini{padding:6px 10px}.achip.sil{color:var(--bad)}
 .tp-b{display:none;padding:0 18px 18px;flex-direction:column;gap:16px}.tp.open .tp-b{display:flex}
 .tp-b h3{margin:0 0 6px;font:700 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .tp-b p{margin:0;white-space:pre-wrap;line-height:1.6}
@@ -630,7 +632,7 @@ setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
     </section>
     <form class="card tp-form" id="tp-form" hidden>
       <div class="tp-g"><label>Tarih<input type="date" id="tf-tarih" required></label><label class="w2">Başlık<input id="tf-baslik" placeholder="ör. 1. Hafta değerlendirmesi" required></label></div>
-      <label>Tutanak dosyası (PDF, Word, görsel · en fazla 700 KB)<input type="file" id="tf-dosya" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.md"><span class="muted" id="tf-dosyadurum" style="font-size:12px"></span></label>
+      <label>Tutanak dosyası (PDF, Word, görsel · en fazla 700 KB · kaydedince Google Drive'a da yüklenir)<input type="file" id="tf-dosya" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.md"><span class="muted" id="tf-dosyadurum" style="font-size:12px"></span></label>
       <label>Bu haftanın Drive bağlantısı (isteğe bağlı)<input id="tf-drive" type="url" placeholder="https://drive.google.com/…"></label>
       <label>Toplantı özeti<textarea id="tf-ozet" rows="4"></textarea></label>
       <div class="tp-kisiler" id="tf-kisiler"></div>
