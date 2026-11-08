@@ -533,6 +533,7 @@ $("yh-form").onsubmit = e => { e.preventDefault(); const d = { faz: $("yf-faz").
   (YHEDIT ? setDoc(doc(db, "yolharitasi", YHEDIT), d, { merge: true }) : addDoc(collection(db, "yolharitasi"), d)).then(() => { $("yh-form").hidden = true; YHEDIT = null; flash("Kaydedildi"); renderYol(); }).catch(() => flash("Kaydedilemedi")); };
 
 /* ---------- Drive ---------- */
+const TUTANAK_KLASOR = "https://drive.google.com/drive/folders/17cXOYbr7o85fUjqT2gD5grGW64IF8kJX";
 let GTOK = null, GTOK_T = 0;
 let GTOKP = null;
 function driveToken() { if (GTOK && Date.now() - GTOK_T < 50 * 60e3) return Promise.resolve(GTOK); if (!GTOKP) GTOKP = driveToken0().finally(() => GTOKP = null); return GTOKP; }
@@ -628,7 +629,7 @@ function renderTp() {
   el.innerHTML = TL2.map(t => { const d = new Date(t.tarih + "T12:00"), U = t.uretimler || {};
     return `<article class="tp${TPACIK === t.id ? " open" : ""}" data-id="${esc(t.id)}">
       <button type="button" class="tp-h"><span class="tp-date"><b>${d.getDate()}</b><span>${esc(AYLAR[d.getMonth()].slice(0, 3))}</span></span><span class="t"><b>${esc(t.baslik || "Toplantı")}${t.taslak ? '<span class="tp-taslak">Taslak · sadece sen</span>' : ""}</b><div>${esc((t.ozet || "").split("\n")[0])}</div></span><span class="ch">${svg("chev", 18)}</span></button>
-      ${t.tutanak ? `<div class="tp-q"><button type="button" class="btn tp-tut">📎 Tutanağı aç · ${esc(t.tutanak.ad)}</button>${t.tutanak.drive ? `<a class="lnk" href="${esc(t.tutanak.drive)}" target="_blank" rel="noopener">Drive'da aç ↗</a>` : `<button type="button" class="m-edit tp-drv">Drive'a kaydet</button>`}</div>` : ""}
+      ${t.tutanak || t.tutanakDrive ? `<div class="tp-q">${t.tutanak ? `<button type="button" class="btn tp-tut">📎 Tutanağı aç · ${esc(t.tutanak.ad)}</button>` : ""}${lnk(t.tutanakDrive || (t.tutanak && t.tutanak.drive)) ? `<a class="btn dark" style="text-decoration:none" href="${esc(t.tutanakDrive || t.tutanak.drive)}" target="_blank" rel="noopener">📄 Tutanak · Drive'da aç ↗</a>` : ""}</div>` : ""}
       <div class="tp-b">
         ${t.ozet ? `<div><h3>Özet</h3><p>${esc(t.ozet)}</p></div>` : ""}
         <div><h3>Haftalık üretimler</h3><div class="tp-u">${ORTAKLAR.map(([k, ad]) => { const u = U[k] || {}, m = ekip.find(x => x.id === k) || { ad };
@@ -643,7 +644,6 @@ function renderTp() {
   el.querySelectorAll(".tp").forEach(c => { const id = c.dataset.id;
     c.querySelector(".tp-h").onclick = () => { TPACIK = TPACIK === id ? null : id; renderTp(); };
     const rb = c.querySelector(".tp-rp"); if (rb) rb.onclick = () => raporAc(id);
-    const dv = c.querySelector(".tp-drv"); if (dv) dv.onclick = () => tutanakDrive(id);
     const tb = c.querySelector(".tp-tut"); if (tb) tb.onclick = async () => { const T = toplantilar.find(x => x.id === id).tutanak; try { const b = await (await fetch(T.veri)).blob(), u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; if (b.type === "application/pdf" || b.type.startsWith("image/")) a.target = "_blank"; else a.download = T.ad; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 6e4); } catch (er) { flash("Dosya açılamadı"); } };
     const yb = c.querySelector(".tp-yay"); if (yb) yb.onclick = () => yayinla(id);
     c.querySelector(".tp-duz").onclick = () => tpForm(toplantilar.find(x => x.id === id));
@@ -656,22 +656,23 @@ function tpForm(t) {
   $("tf-tarih").value = t ? t.tarih : iso(new Date()); $("tf-baslik").value = t ? t.baslik || "" : ""; $("tf-drive").value = t ? t.drive || "" : "";
   $("tf-ozet").value = t ? t.ozet || "" : ""; $("tf-karar").value = t ? (t.kararlar || []).join("\n") : ""; $("tf-aksiyon").value = t ? (t.aksiyonlar || []).join("\n") : "";
   $("tf-kisiler").innerHTML = ORTAKLAR.map(([k, ad]) => { const u = U[k] || {}; return `<div class="tp-kisi" data-k="${k}"><h4>${ad}</h4><label>Bu hafta ne üretti<textarea rows="3" class="k-y">${esc(u.yapilan || "")}</textarea></label><label>Değerlendirme<textarea rows="3" class="k-d">${esc(u.degerlendirme || "")}</textarea></label><label>Dosya bağlantısı<input type="url" class="k-l" value="${esc(u.link || "")}" placeholder="https://drive.google.com/…"></label></div>`; }).join("");
-  $("tf-dosya").value = ""; $("tf-dosyadurum").textContent = t && t.tutanak ? "Yüklü: " + t.tutanak.ad + " (yeni seçersen değişir)" : "";
+  $("tf-tdrive").value = t ? t.tutanakDrive || (t.tutanak && t.tutanak.drive) || "" : ""; $("tf-dosya").value = ""; $("tf-dosyadurum").textContent = t && t.tutanak ? "Yüklü: " + t.tutanak.ad + " (yeni seçersen değişir)" : "";
   $("tp-form").hidden = false; $("tf-baslik").focus(); scrollTo(0, 0);
 }
 $("tp-yeni").onclick = () => tpForm(null);
 $("tp-tutanak").onclick = () => { tpForm(null); $("tf-baslik").value = "Toplantı tutanağı"; $("tf-dosya").click(); };
+$("tp-tklasor").href = TUTANAK_KLASOR;
 $("tf-iptal").onclick = () => { $("tp-form").hidden = true; TPEDIT = null; renderTp(); };
-$("tp-form").onsubmit = async e => { e.preventDefault(); if ($("tf-dosya").files[0]) driveToken().catch(() => { });
+$("tp-form").onsubmit = async e => { e.preventDefault();
   const satir = id => $(id).value.split("\n").map(s => s.trim()).filter(Boolean), U = {};
   $("tf-kisiler").querySelectorAll(".tp-kisi").forEach(c => U[c.dataset.k] = { yapilan: c.querySelector(".k-y").value.trim(), degerlendirme: c.querySelector(".k-d").value.trim(), link: c.querySelector(".k-l").value.trim() });
   const f = $("tf-dosya").files[0], eskiT = TPEDIT && (toplantilar.find(x => x.id === TPEDIT) || {}).tutanak;
   if (f && f.size > 700 * 1024) { flash("Dosya 700 KB'tan büyük — küçültüp tekrar dene"); return; }
   const tutanak = f ? { ad: f.name, boyut: f.size, veri: await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); }) } : (eskiT || null);
-  const d = { tarih: $("tf-tarih").value, baslik: $("tf-baslik").value.trim(), drive: $("tf-drive").value.trim(), ozet: $("tf-ozet").value.trim(), kararlar: satir("tf-karar"), aksiyonlar: satir("tf-aksiyon"), uretimler: U, ekleyen: MYNAME, ts: Date.now() }; if (tutanak) d.tutanak = tutanak;
+  const d = { tarih: $("tf-tarih").value, baslik: $("tf-baslik").value.trim(), drive: $("tf-drive").value.trim(), ozet: $("tf-ozet").value.trim(), kararlar: satir("tf-karar"), aksiyonlar: satir("tf-aksiyon"), uretimler: U, ekleyen: MYNAME, ts: Date.now() }; if (tutanak) d.tutanak = tutanak; d.tutanakDrive = $("tf-tdrive").value.trim();
   const p = TPEDIT ? setDoc(doc(db, "toplantilar", TPEDIT), d) : addDoc(collection(db, "toplantilar"), d);
   const yeniDosya = !!f;
-  p.then(r => { const kid = TPEDIT || (r && r.id); if (yeniDosya && kid) setTimeout(() => tutanakDrive(kid), 1500); TPACIK = kid || null; TPEDIT = null; $("tp-form").hidden = true; flash("Toplantı kaydedildi"); renderTp(); }).catch(() => flash("Kaydedilemedi"));
+  p.then(r => { const kid = TPEDIT || (r && r.id); TPACIK = kid || null; TPEDIT = null; $("tp-form").hidden = true; flash("Toplantı kaydedildi"); renderTp(); }).catch(() => flash("Kaydedilemedi"));
 };
 $("tp-drivedeg").onclick = () => { const f = $("tp-drivedeg"); if (f.dataset.on) return; f.dataset.on = 1;
   const box = document.createElement("form"); box.style.cssText = "display:flex;gap:8px;width:100%;margin-top:8px"; box.innerHTML = '<input type="url" placeholder="https://drive.google.com/drive/folders/…" style="flex:1" required><button class="btn">Kaydet</button>';
