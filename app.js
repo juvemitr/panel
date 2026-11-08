@@ -22,7 +22,10 @@ const ODEYEN = ["Mustafa", "Rumeysa", "Fatma Nur", "Ortak kasa"], ORTAK = ["Must
 const TL = n => "₺" + Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
 
-let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", mesajlar = [], toplantilar = [], ST_SON = null, ST_YUK = false, haftalar = [], yol = [], YHEDIT = null, TPACIK = null, TPEDIT = null, panel = { gorevler: [] }, unsub = [];
+let ME = null, MYNAME = "", ozet = null, mods = [], giderler = [], gunluk = [], etk = [], sermaye = [], butce = {}, ekip = [], EDIT = null, durum = {}, KADI = "", mesajlar = [], toplantilar = [], ST_SON = null, ST_YUK = false, haftalar = [], yol = [], YHEDIT = null, TPACIK = null, TPEDIT = null, panel = { gorevler: [], alanlar: [] }, unsub = [], SAG = (() => { try { return localStorage.getItem("juvemi-sag"); } catch (e) { } })();
+const VARS_ALAN = [{ id: "juvemi", ad: "Juvémi" }, { id: "kisisel", ad: "Kişisel" }, { id: "ev", ad: "Ev" }], ARENK = ["#E0A83A", "#7090A3", "#3F8F5F", "#B07AC9", "#D9776B", "#5BA8A0"];
+function alanlar() { if (!panel.alanlar || !panel.alanlar.length) panel.alanlar = VARS_ALAN.map(x => ({ ...x })); return panel.alanlar; }
+function alanOf(t) { const A = alanlar(); return A.some(a => a.id === t.alan) ? t.alan : A[0].id; }
 let TAB = (location.hash || "").slice(1) || (() => { try { return localStorage.getItem("juvemi-tab"); } catch (e) { } })() || "ana";
 function flash(m) { $("status").textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => $("status").textContent = "", 2500); }
 
@@ -199,7 +202,7 @@ function renderGenel() {
 let DRAG = null;
 window.juvemiGorevOku = () => JSON.parse(JSON.stringify(panel.gorevler || []));
 window.juvemiGorevYaz = list => { panel.gorevler = list; savePanel(); return list.length; };
-function savePanel() { setTimeout(renderTabs, 0); setDoc(doc(db, "kullanicilar", ME), { ad: MYNAME, gorevler: panel.gorevler }).then(() => flash("Kaydedildi")).catch(() => flash("Kaydedilemedi")); renderTasks(); }
+function savePanel() { setTimeout(renderTabs, 0); setDoc(doc(db, "kullanicilar", ME), { ad: MYNAME, gorevler: panel.gorevler, alanlar: alanlar() }).then(() => flash("Kaydedildi")).catch(() => flash("Kaydedilemedi")); renderTasks(); }
 const altTum = L => (L || []).reduce((s, x) => s.concat([x], altTum(x.altlar)), []);
 function altBul(L, id, ust) { for (const x of L || []) { if (x.id === id) return { x, liste: L, ust }; const r = altBul(x.altlar, id, x); if (r) return r; } return null; }
 function altDuzelt(L) { (L || []).forEach(x => { if ((x.altlar || []).length) { altDuzelt(x.altlar); x.ok = x.altlar.every(z => z.ok); } }); }
@@ -237,10 +240,34 @@ function altBagla(c, t) {
 function renderTasks() {
   const g = panel.gorevler || [], done = g.filter(t => t.durum === "bitti").length;
   $("pnum").textContent = done + " / " + g.length; $("barfill").style.width = (g.length ? 100 * done / g.length : 0) + "%";
-  const el = $("tasks");
-  if (!g.length) { el.innerHTML = '<div class="empty">Henüz görevin yok. Yukarıdan ilk görevini ekle.</div>'; return; }
-  const focused = document.activeElement && document.activeElement.id; el.innerHTML = "";
-  g.forEach((t, i) => {
+  const A = alanlar(), others = A.slice(1); if (!others.some(x => x.id === SAG)) SAG = others[0] ? others[0].id : null;
+  const focused = document.activeElement && document.activeElement.id;
+  const say = id => g.filter(t => alanOf(t) === id && t.durum !== "bitti").length;
+  $("gl-ad").textContent = A[0].ad; $("gl-say").textContent = say(A[0].id) + " açık";
+  $("gr-chips").innerHTML = others.map((a, i) => `<button type="button" class="achip" data-alan="${esc(a.id)}" aria-pressed="${a.id === SAG}"><i style="background:${ARENK[(i + 1) % ARENK.length]}"></i><span>${esc(a.ad)}</span><small>${say(a.id)}</small></button>`).join("") + `<button type="button" class="achip add" id="gr-addbtn">+ Alan ekle</button>`;
+  $("gr-chips").querySelectorAll(".achip[data-alan]").forEach(c => {
+    c.onclick = () => { if (c.dataset.alan === SAG) return alanDuz(c.dataset.alan); SAG = c.dataset.alan; try { localStorage.setItem("juvemi-sag", SAG); } catch (e) { } renderTasks(); };
+    c.title = "Seç · seçiliyken tekrar tıkla: adını değiştir / sil";
+  });
+  $("gr-addbtn").onclick = () => { const f = $("gr-addf"); f.hidden = !f.hidden; if (!f.hidden) $("gr-addin").focus(); };
+  $("add-alan").innerHTML = A.map(a => `<option value="${esc(a.id)}">${esc(a.ad)}</option>`).join(""); if (!$("add-alan").dataset.dok) $("add-alan").value = A[0].id;
+  [["tasks", A[0].id], ["tasks2", SAG]].forEach(([eid, aid]) => { const el = $(eid); el.innerHTML = ""; el.dataset.alan = aid || "";
+    const L = aid ? g.filter(t => alanOf(t) === aid) : [];
+    if (!aid) { el.innerHTML = '<div class="empty">Henüz başka alan yok. "+ Alan ekle" ile Kişisel, Ev gibi alanlar aç.</div>'; return; }
+    if (!L.length) { el.innerHTML = `<div class="empty">Bu alanda görev yok. Yukarıdan ekle ya da kartı buradaki sekmeye sürükle.</div>`; return; }
+    L.forEach((t, i) => kartCiz(t, i, el)); });
+  if (focused && $(focused)) $(focused).focus();
+}
+function alanDuz(id) {
+  const A = alanlar(), a = A.find(x => x.id === id); if (!a) return;
+  const v = prompt(`"${a.ad}" alanının yeni adı (silmek için boş bırak):`, a.ad); if (v === null) return;
+  if (v.trim()) { a.ad = v.trim(); savePanel(); return; }
+  const n = (panel.gorevler || []).filter(t => alanOf(t) === id).length;
+  if (n && !confirm(`${n} görev ${A[0].ad} alanına taşınacak. Silinsin mi?`)) return;
+  panel.gorevler.forEach(t => { if (alanOf(t) === id) t.alan = A[0].id; }); panel.alanlar = A.filter(x => x.id !== id); SAG = null; savePanel();
+}
+function kartCiz(t, i, el) {
+  {
     const s = t.durum || "acik", c = document.createElement("article"); c.className = "task" + (s === "bitti" ? " done" : ""); c.dataset.id = t.id;
     c.innerHTML = `<div class="num" title="Tutup sürükle">${i + 1}<small>⋮⋮</small></div><div class="ttl ed" contenteditable="true" spellcheck="false" data-k="baslik" data-ph="Görev başlığı" title="Düzenlemek için tıkla">${esc(t.baslik)}</div><button class="pill" data-s="${s}" type="button">${LBL[s]}</button><div class="desc ed" contenteditable="true" spellcheck="false" data-k="aciklama" data-ph="+ Açıklama ekle" title="Düzenlemek için tıkla">${esc(t.aciklama || "")}</div>${altHTML(t)}<input type="date" class="tdate" value="${esc(t.tarih || "")}" aria-label="Tarih" title="Tarih (takvimde görünür)"><textarea class="note" id="n-${esc(t.id)}" placeholder="Not ekle…">${esc(t.not || "")}</textarea><button class="del" type="button">Sil</button>`;
     c.querySelector(".pill").onclick = () => { t.durum = ST[(ST.indexOf(s) + 1) % 3]; savePanel(); };
@@ -258,7 +285,7 @@ function renderTasks() {
     c.onpointerdown = e => {
       if (e.button > 0 || e.target.closest("input,textarea,button,a,[contenteditable]")) return;
       if (e.pointerType !== "mouse" && !e.target.closest(".num")) return;
-      e.preventDefault(); const y0 = e.clientY, x0 = e.clientX; let basladi = false, hayalet = null, dx = 0, dy = 0;
+      e.preventDefault(); const y0 = e.clientY, x0 = e.clientX; let basladi = false, hayalet = null, dx = 0, dy = 0, hedef = null;
       const bas = () => {
         basladi = true; DRAG = t.id; document.body.style.userSelect = "none"; document.body.classList.add("suruklen");
         const r = c.getBoundingClientRect(); dx = x0 - r.left; dy = y0 - r.top;
@@ -269,6 +296,9 @@ function renderTasks() {
       const mv = ev => {
         if (!basladi) { if (Math.abs(ev.clientY - y0) < 5) return; bas(); }
         ev.preventDefault(); hayalet.style.left = (ev.clientX - dx) + "px"; hayalet.style.top = (ev.clientY - dy) + "px";
+        document.querySelectorAll(".achip.over,.tasks.over").forEach(x => x.classList.remove("over"));
+        const alt0 = document.elementFromPoint(ev.clientX, ev.clientY), hz = alt0 && alt0.closest(".achip[data-alan],.tasks[data-alan]");
+        hedef = hz && hz.dataset.alan && hz.dataset.alan !== alanOf(t) ? hz.dataset.alan : null; if (hedef) { hz.classList.add("over"); return; }
         const kart = [...el.querySelectorAll(".task:not(.yuva)")];
         let once = null; for (const k of kart) { const r = k.getBoundingClientRect(); if (ev.clientY < r.top + r.height / 2) { once = k; break; } }
         if (once) { if (c.nextElementSibling !== once) el.insertBefore(c, once); } else if (el.lastElementChild !== c) el.appendChild(c);
@@ -276,18 +306,20 @@ function renderTasks() {
       };
       const up = () => {
         removeEventListener("pointermove", mv); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); if (!basladi) return;
-        document.body.style.userSelect = ""; document.body.classList.remove("suruklen"); DRAG = null;
+        document.body.style.userSelect = ""; document.body.classList.remove("suruklen"); DRAG = null; document.querySelectorAll(".achip.over,.tasks.over").forEach(x => x.classList.remove("over"));
         const r = c.getBoundingClientRect(); hayalet.style.transition = "left .15s, top .15s, transform .15s, box-shadow .15s"; hayalet.style.left = r.left + "px"; hayalet.style.top = r.top + "px"; hayalet.style.transform = "none";
         setTimeout(() => { hayalet.remove(); c.classList.remove("yuva"); c.style.height = "";
-          const sira = [...el.querySelectorAll(".task")].map(x => x.dataset.id), eski = panel.gorevler.map(x => x.id).join();
-          if (sira.join() !== eski) { panel.gorevler.sort((p, q) => sira.indexOf(p.id) - sira.indexOf(q.id)); savePanel(); } else renderTasks(); }, 160);
+          if (hedef && hedef !== alanOf(t)) { t.alan = hedef; savePanel(); flash("Taşındı"); return; }
+          const sira = [...el.querySelectorAll(".task")].map(x => x.dataset.id), G = panel.gorevler, yer = G.map((x, k) => sira.includes(x.id) ? k : -1).filter(k => k >= 0), alt = sira.map(id => G.find(x => x.id === id));
+          const eski = yer.map(k => G[k].id).join(); if (sira.join() !== eski) { yer.forEach((k, n) => G[k] = alt[n]); savePanel(); } else renderTasks(); }, 160);
       };
       addEventListener("pointermove", mv, { passive: false }); addEventListener("pointerup", up); addEventListener("pointercancel", up);
     };
     el.appendChild(c);
-  });
-  if (focused && $(focused)) $(focused).focus();
+  }
 }
+$("gr-addf").onsubmit = e => { e.preventDefault(); const v = $("gr-addin").value.trim(); if (!v) return; const id = "a" + Date.now(); alanlar().push({ id, ad: v }); SAG = id; $("gr-addin").value = ""; $("gr-addf").hidden = true; savePanel(); };
+$("add-alan").onchange = () => $("add-alan").dataset.dok = 1;
 
 /* ---------- giderler ---------- */
 function rows(el, map, cls) { const mx = Math.max(1, ...Object.values(map)); el.innerHTML = Object.entries(map).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="row ${cls}"><span>${esc(k)}</span><div class="bar"><i style="width:${100 * v / mx}%"></i></div><span class="amt">${TL(v)}</span></div>`).join("") || '<div class="muted">Henüz gider yok.</div>'; }
@@ -314,7 +346,7 @@ $("gform").onsubmit = e => {
 };
 $("addform").onsubmit = e => {
   e.preventDefault(); const b = $("add-t").value.trim(); if (!b) return;
-  panel.gorevler.push({ id: "g" + Date.now(), baslik: b, aciklama: $("add-d").value.trim(), durum: "acik", not: "", tarih: $("add-tarih").value || "" }); $("add-t").value = ""; $("add-d").value = ""; $("add-tarih").value = ""; savePanel();
+  panel.gorevler.push({ id: "g" + Date.now(), baslik: b, aciklama: $("add-d").value.trim(), durum: "acik", not: "", tarih: $("add-tarih").value || "", alan: $("add-alan").value || alanlar()[0].id }); $("add-t").value = ""; $("add-d").value = ""; $("add-tarih").value = ""; savePanel();
 };
 $("logform").onsubmit = e => {
   e.preventDefault(); const v = $("logtext").value.trim(); if (!v) return;
@@ -570,11 +602,12 @@ function renderTp() {
             ${lnk(u.link) ? `<a href="${esc(u.link)}" target="_blank" rel="noopener">Dosyaları aç ↗</a>` : ""}</div>`; }).join("")}</div></div>
         ${(t.kararlar || []).length ? `<div><h3>Alınan kararlar</h3><ul class="tp-ul">${t.kararlar.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
         ${(t.aksiyonlar || []).length ? `<div><h3>Aksiyonlar</h3><ul class="tp-ul">${t.aksiyonlar.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-        <div class="tp-act">${t.rapor ? `<button type="button" class="btn tp-rp">📄 Raporu aç (PDF)</button>` : ""}${t.taslak && KADI === "mustafa" ? `<button type="button" class="btn dark tp-yay">Yayınla</button>` : ""}${lnk(t.drive) ? `<a class="lnk" href="${esc(t.drive)}" target="_blank" rel="noopener">Bu haftanın Drive klasörü ↗</a>` : ""}<button type="button" class="m-edit tp-duz">Düzenle</button><button type="button" class="del tp-sil">Sil</button><span class="muted" style="margin-left:auto;font-size:12px">${esc(t.ekleyen ? "Kaydeden: " + t.ekleyen : "")}</span></div>
+        <div class="tp-act">${t.tutanak ? `<button type="button" class="btn tp-tut">📎 Tutanak: ${esc(t.tutanak.ad)}</button>` : ""}${t.rapor ? `<button type="button" class="btn tp-rp">📄 Raporu aç (PDF)</button>` : ""}${t.taslak && KADI === "mustafa" ? `<button type="button" class="btn dark tp-yay">Yayınla</button>` : ""}${lnk(t.drive) ? `<a class="lnk" href="${esc(t.drive)}" target="_blank" rel="noopener">Bu haftanın Drive klasörü ↗</a>` : ""}<button type="button" class="m-edit tp-duz">Düzenle</button><button type="button" class="del tp-sil">Sil</button><span class="muted" style="margin-left:auto;font-size:12px">${esc(t.ekleyen ? "Kaydeden: " + t.ekleyen : "")}</span></div>
       </div></article>`; }).join("");
   el.querySelectorAll(".tp").forEach(c => { const id = c.dataset.id;
     c.querySelector(".tp-h").onclick = () => { TPACIK = TPACIK === id ? null : id; renderTp(); };
     const rb = c.querySelector(".tp-rp"); if (rb) rb.onclick = () => raporAc(id);
+    const tb = c.querySelector(".tp-tut"); if (tb) tb.onclick = async () => { const T = toplantilar.find(x => x.id === id).tutanak; try { const b = await (await fetch(T.veri)).blob(), u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; if (b.type === "application/pdf" || b.type.startsWith("image/")) a.target = "_blank"; else a.download = T.ad; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 6e4); } catch (er) { flash("Dosya açılamadı"); } };
     const yb = c.querySelector(".tp-yay"); if (yb) yb.onclick = () => yayinla(id);
     c.querySelector(".tp-duz").onclick = () => tpForm(toplantilar.find(x => x.id === id));
     const s = c.querySelector(".tp-sil"); s.onclick = () => { if (!s.classList.contains("sure")) { s.classList.add("sure"); s.textContent = "Silmek için tekrar tıkla"; setTimeout(() => { s.classList.remove("sure"); s.textContent = "Sil"; }, 4000); return; }
@@ -586,14 +619,19 @@ function tpForm(t) {
   $("tf-tarih").value = t ? t.tarih : iso(new Date()); $("tf-baslik").value = t ? t.baslik || "" : ""; $("tf-drive").value = t ? t.drive || "" : "";
   $("tf-ozet").value = t ? t.ozet || "" : ""; $("tf-karar").value = t ? (t.kararlar || []).join("\n") : ""; $("tf-aksiyon").value = t ? (t.aksiyonlar || []).join("\n") : "";
   $("tf-kisiler").innerHTML = ORTAKLAR.map(([k, ad]) => { const u = U[k] || {}; return `<div class="tp-kisi" data-k="${k}"><h4>${ad}</h4><label>Bu hafta ne üretti<textarea rows="3" class="k-y">${esc(u.yapilan || "")}</textarea></label><label>Değerlendirme<textarea rows="3" class="k-d">${esc(u.degerlendirme || "")}</textarea></label><label>Dosya bağlantısı<input type="url" class="k-l" value="${esc(u.link || "")}" placeholder="https://drive.google.com/…"></label></div>`; }).join("");
+  $("tf-dosya").value = ""; $("tf-dosyadurum").textContent = t && t.tutanak ? "Yüklü: " + t.tutanak.ad + " (yeni seçersen değişir)" : "";
   $("tp-form").hidden = false; $("tf-baslik").focus(); scrollTo(0, 0);
 }
 $("tp-yeni").onclick = () => tpForm(null);
+$("tp-tutanak").onclick = () => { tpForm(null); $("tf-baslik").value = "Toplantı tutanağı"; $("tf-dosya").click(); };
 $("tf-iptal").onclick = () => { $("tp-form").hidden = true; TPEDIT = null; renderTp(); };
-$("tp-form").onsubmit = e => { e.preventDefault();
+$("tp-form").onsubmit = async e => { e.preventDefault();
   const satir = id => $(id).value.split("\n").map(s => s.trim()).filter(Boolean), U = {};
   $("tf-kisiler").querySelectorAll(".tp-kisi").forEach(c => U[c.dataset.k] = { yapilan: c.querySelector(".k-y").value.trim(), degerlendirme: c.querySelector(".k-d").value.trim(), link: c.querySelector(".k-l").value.trim() });
-  const d = { tarih: $("tf-tarih").value, baslik: $("tf-baslik").value.trim(), drive: $("tf-drive").value.trim(), ozet: $("tf-ozet").value.trim(), kararlar: satir("tf-karar"), aksiyonlar: satir("tf-aksiyon"), uretimler: U, ekleyen: MYNAME, ts: Date.now() };
+  const f = $("tf-dosya").files[0], eskiT = TPEDIT && (toplantilar.find(x => x.id === TPEDIT) || {}).tutanak;
+  if (f && f.size > 700 * 1024) { flash("Dosya 700 KB'tan büyük — küçültüp tekrar dene"); return; }
+  const tutanak = f ? { ad: f.name, boyut: f.size, veri: await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); }) } : (eskiT || null);
+  const d = { tarih: $("tf-tarih").value, baslik: $("tf-baslik").value.trim(), drive: $("tf-drive").value.trim(), ozet: $("tf-ozet").value.trim(), kararlar: satir("tf-karar"), aksiyonlar: satir("tf-aksiyon"), uretimler: U, ekleyen: MYNAME, ts: Date.now() }; if (tutanak) d.tutanak = tutanak;
   const p = TPEDIT ? setDoc(doc(db, "toplantilar", TPEDIT), d) : addDoc(collection(db, "toplantilar"), d);
   p.then(r => { TPACIK = TPEDIT || (r && r.id) || null; TPEDIT = null; $("tp-form").hidden = true; flash("Toplantı kaydedildi"); renderTp(); }).catch(() => flash("Kaydedilemedi"));
 };
@@ -792,5 +830,5 @@ async function start(kadi) {
   unsub.push(onSnapshot(query(collection(db, "ekip"), orderBy("sira")), s => { ekip = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })); renderTabs(); }));
   unsub.push(onSnapshot(collection(db, "butce"), s => { butce = {}; s.docs.forEach(d => butce[d.id] = d.data()); renderTabs(); }));
   unsub.push(onSnapshot(query(collection(db, "gunluk"), orderBy("ts", "desc")), s => { gunluk = s.docs.map(d => d.data()); renderGenel(); }));
-  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && (document.activeElement.tagName === "TEXTAREA" || (document.activeElement.closest(".alt-ekle") && document.activeElement.value) || document.activeElement.isContentEditable))) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [] }; renderTasks(); renderTabs(); }));
+  unsub.push(onSnapshot(doc(db, "kullanicilar", ME), s => { if (DRAG || (document.activeElement && (document.activeElement.tagName === "TEXTAREA" || (document.activeElement.closest(".alt-ekle") && document.activeElement.value) || document.activeElement.isContentEditable))) return; const d = s.data(); panel = { gorevler: (d && d.gorevler) || [], alanlar: (d && d.alanlar) || [] }; renderTasks(); renderTabs(); }));
 }

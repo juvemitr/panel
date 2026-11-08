@@ -38,6 +38,17 @@ section{display:flex;flex-direction:column}.pane{display:flex;flex-direction:col
 .tasks{display:flex;flex-direction:column;gap:10px}
 .task{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:start}
 .task .num{touch-action:none;cursor:grab}.task{cursor:grab}.task input,.task textarea,.task .alt-ad,.task .desc{cursor:auto}.task.dragging{cursor:grabbing}.task.yuva{background:transparent;border:2px dashed var(--mustard);box-shadow:none!important;transition:none}.task.yuva>*{visibility:hidden}
+
+.gbol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;align-items:start}
+.gyari{display:flex;flex-direction:column;gap:10px;min-width:0}
+.gbol .task{grid-template-columns:auto 1fr auto}
+.ghead{display:flex;align-items:center;gap:8px;min-height:34px}.ghead>i{width:10px;height:10px;border-radius:50%}.ghead b{font-family:var(--display);font-size:17px}.ghead small{color:var(--muted);font-weight:700;font-size:12px}
+.achips{flex-wrap:wrap;gap:6px}
+.achip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:99px;padding:6px 12px;font:700 13px var(--body);cursor:pointer}
+.achip i{width:9px;height:9px;border-radius:50%}.achip small{font-weight:700;opacity:.8}
+.achip[aria-pressed=true]{color:var(--ink);border-color:var(--ink)}.achip.add{border-style:dashed}
+.achip.over,.tasks.over{outline:2px solid var(--mustard);outline-offset:2px;background:var(--wipbg)}
+@media (max-width:900px){.gbol{grid-template-columns:1fr}#addform{grid-template-columns:1fr 1fr}}
 .hayalet{position:fixed;z-index:999;margin:0;pointer-events:none;transform:rotate(-1.5deg) scale(1.02);box-shadow:0 18px 40px rgba(0,0,0,.25)!important;cursor:grabbing;opacity:.97}
 body.suruklen,body.suruklen *{cursor:grabbing!important}
 .alt{grid-column:2/4;margin-top:6px;cursor:auto}
@@ -118,7 +129,7 @@ textarea,input,select{width:100%;box-sizing:border-box;border:1px solid var(--li
 .note{grid-column:2/4;margin-top:6px;resize:vertical;min-height:38px}
 .del{background:none;border:0;color:var(--muted);font:600 12px var(--body);cursor:pointer;padding:2px 0;justify-self:start}.del.sure{color:var(--bad)}
 .task .del{grid-column:2/4}
-.form{display:grid;gap:8px;grid-template-columns:1fr 1.4fr auto}#addform{grid-template-columns:1fr 1.4fr 150px auto}
+.form{display:grid;gap:8px;grid-template-columns:1fr 1.4fr auto}#addform{grid-template-columns:1fr 1.4fr 130px 150px auto}
 .btn{border:0;border-radius:8px;background:var(--mustard);color:var(--onm);font:700 14px var(--body);padding:9px 16px;cursor:pointer;white-space:nowrap}
 .btn.dark{background:var(--ink);color:var(--bg)}
 .gform{display:grid;gap:8px;grid-template-columns:130px 1fr 170px 120px 150px auto;align-items:end}
@@ -571,8 +582,11 @@ setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
     <section><h2>Görevlerim</h2>
       <p class="muted" style="margin:0 0 10px">Bu liste sadece sana görünür. Ortakların kendi listelerini görür.</p>
       <div class="progress"><div class="bar"><i id="barfill" style="width:0"></i></div><div class="pnum" id="pnum">0 / 0</div></div>
-      <form class="form" id="addform" style="margin-top:14px"><input id="add-t" placeholder="Yeni görev başlığı" autocomplete="off" required><input id="add-d" placeholder="Kısa açıklama (isteğe bağlı)" autocomplete="off"><input type="date" id="add-tarih" aria-label="Tarih (isteğe bağlı)"><button class="btn">Görev ekle</button></form>
-      <div class="tasks" id="tasks" style="margin-top:12px"></div>
+      <form class="form" id="addform" style="margin-top:14px"><input id="add-t" placeholder="Yeni görev başlığı" autocomplete="off" required><input id="add-d" placeholder="Kısa açıklama (isteğe bağlı)" autocomplete="off"><select id="add-alan" aria-label="Alan"></select><input type="date" id="add-tarih" aria-label="Tarih (isteğe bağlı)"><button class="btn">Görev ekle</button></form>
+      <div class="gbol">
+        <div class="gyari"><div class="ghead"><i style="background:#E0A83A"></i><b id="gl-ad">Juvémi</b><small id="gl-say"></small></div><div class="tasks" id="tasks"></div></div>
+        <div class="gyari"><div class="ghead achips" id="gr-chips"></div><form class="form" id="gr-addf" hidden style="grid-template-columns:1fr auto"><input id="gr-addin" placeholder="Yeni alan adı (ör. Doktora, Araba)" maxlength="40" autocomplete="off"><button class="btn dark">Ekle</button></form><div class="tasks" id="tasks2"></div></div>
+      </div>
     </section>
   </div>
 
@@ -612,10 +626,11 @@ setTimeout(function(){if(!bitirildi)bit()},9000)})();</script></div>
   <div class="pane" data-pane="toplantilar">
     <section class="tp-top">
       <div><b>Haftalık üretimler klasörü</b><div class="muted" id="tp-drivedurum">Google Drive'daki ortak klasör</div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" id="tp-yukle" target="_blank" rel="noopener" style="text-decoration:none">Haftalık üretimimi yükle</a><a class="btn dark" id="tp-drive" target="_blank" rel="noopener" style="text-decoration:none">Tüm klasör</a><button type="button" class="btn" id="tp-rapor" style="background:var(--slate);color:#fff">📄 Bu haftanın raporu</button><button type="button" class="btn dark" id="tp-analiz" hidden>✦ Claude'a analiz ettir</button><button type="button" class="btn dark" id="tp-drivedeg">Linki değiştir</button><button type="button" class="btn dark" id="tp-yeni">+ Yeni toplantı kaydı</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" id="tp-yukle" target="_blank" rel="noopener" style="text-decoration:none">Haftalık üretimimi yükle</a><a class="btn dark" id="tp-drive" target="_blank" rel="noopener" style="text-decoration:none">Tüm klasör</a><button type="button" class="btn" id="tp-rapor" style="background:var(--slate);color:#fff">📄 Bu haftanın raporu</button><button type="button" class="btn dark" id="tp-analiz" hidden>✦ Claude'a analiz ettir</button><button type="button" class="btn dark" id="tp-drivedeg">Linki değiştir</button><button type="button" class="btn" id="tp-tutanak">📎 Toplantı tutanağı yükle</button><button type="button" class="btn dark" id="tp-yeni">+ Yeni toplantı kaydı</button></div>
     </section>
     <form class="card tp-form" id="tp-form" hidden>
       <div class="tp-g"><label>Tarih<input type="date" id="tf-tarih" required></label><label class="w2">Başlık<input id="tf-baslik" placeholder="ör. 1. Hafta değerlendirmesi" required></label></div>
+      <label>Tutanak dosyası (PDF, Word, görsel · en fazla 700 KB)<input type="file" id="tf-dosya" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.md"><span class="muted" id="tf-dosyadurum" style="font-size:12px"></span></label>
       <label>Bu haftanın Drive bağlantısı (isteğe bağlı)<input id="tf-drive" type="url" placeholder="https://drive.google.com/…"></label>
       <label>Toplantı özeti<textarea id="tf-ozet" rows="4"></textarea></label>
       <div class="tp-kisiler" id="tf-kisiler"></div>
